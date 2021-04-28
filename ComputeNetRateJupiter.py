@@ -5,7 +5,7 @@ Created on Sun Mar 21 23:45:33 2021
 @author: Steven Hill
 """
 
-def ComputeNetRateJupiter(scidata,header,IDs,positions,radii):
+def ComputeNetRateJupiter(scidata,header,IDs,positions,radii,Filter):
     from photutils import CircularAperture
     from photutils import aperture_photometry
     from photutils import CircularAnnulus
@@ -22,21 +22,48 @@ def ComputeNetRateJupiter(scidata,header,IDs,positions,radii):
     
     phot_table = hstack([rawflux_table, bkgflux_table], table_names=['raw', 'bkg'])
     bkg_mean = phot_table['aperture_sum_bkg'] / annulus_apertures.area()
-    print "bkg_mean=",bkg_mean
+    #print "bkg_mean=",bkg_mean
     bkg_sum = bkg_mean * apertures.area()
-    print "bkg_sum=",bkg_sum
+    #print "bkg_sum=",bkg_sum
     final_sum = phot_table['aperture_sum_raw'] - bkg_sum
-    print "final_sum=",final_sum
+    #print "final_sum=",final_sum
     rate=final_sum/header['EXPTIME']
     phot_table['net_count_rate'] = rate
-    print "Raw=",rawflux_table
-    print 'Bkg=',bkgflux_table
+    #print "Raw=",rawflux_table
+    #print 'Bkg=',bkgflux_table
     phot_table['Names']=IDs
     phot_table['Filter']=header['Filter']
-    phot_table['Date-Obs']=header['Date-Obs']
+    phot_table['Date-Obs']=header['MIDPOINT']
     phot_table.remove_column('id_bkg')
     phot_table.remove_column('xcenter_bkg')
     phot_table.remove_column('ycenter_bkg')
-    print phot_table
+    #print phot_table
     WVCenter=Filter.CenterWV###Testing Area
     return rate,WVCenter,phot_table
+
+def uniform_lat_grid(Latitude,Signal,Fine=False):
+    """
+    Takes an existing spectrum on a non-standard or even irregular
+    wavelength grid and performs linear interpolation to place the data
+    on one of four uniform grids:
+        1) -100 to 1100nm with 0.5nm bins (includes zeroeth order)
+        2) -100 to 1100nm with 0.1nm bins
+        3) 115 to 1062.5nm with 0.5nm bins (Pickles standard range)
+        4) 115 to 1062.5nm with 0.1nm bins 
+    """
+    import numpy as np
+    from scipy import interpolate
+
+    if Fine:    #Set grid interval
+        dlat=1.0
+    else:
+        dlat=2.0
+
+    LatGrid=np.arange(-90.,90.1,dlat,dtype=float)
+    #print Wavelength.size,Signal.size    
+    Interp=interpolate.interp1d(Latitude,Signal,kind='linear', 
+                                copy=True,bounds_error=False, 
+                                fill_value=np.NaN,axis=0)  
+    SignalonGrid=Interp(LatGrid)
+
+    return LatGrid,SignalonGrid
