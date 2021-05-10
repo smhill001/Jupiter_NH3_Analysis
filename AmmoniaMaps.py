@@ -24,7 +24,10 @@ def AmmoniaMaps():
     drive="f:"
     path="/Astronomy/Projects/Planets/Jupiter/Imaging Data/Mapping/"
     
-    Dates=["20200720UT","20200729UT","20200730UT","20200731UT"]
+    Dates=["20200720UT","20200729UT","20200730UT","20200731UT","20200902UT",
+           "20200903UT","20200904UT","20200913UT","20200914UT","20200915UT",
+           "20200924UT"]
+    
     PlotIDs={'20200720UT':['Jupiter-20200720UT-RGB',
                            'Jupiter-20200720UT-ClrSlp',
                            'Jupiter-20200720UT-NH3Abs',
@@ -44,7 +47,42 @@ def AmmoniaMaps():
                            'Jupiter-20200731UT-ClrSlp',
                            'Jupiter-20200731UT-NH3Abs',
                            'Jupiter-20200731UT-889CH4',
-                           'Jupiter-20200731UT-380NUV'],}
+                           'Jupiter-20200731UT-380NUV'],
+             '20200902UT':['Jupiter-20200902UT-RGB',
+                           'Jupiter-20200902UT-ClrSlp',
+                           'Jupiter-20200902UT-NH3Abs',
+                           'Jupiter-20200902UT-889CH4',
+                           'Jupiter-20200902UT-NH3Abs'],
+             '20200903UT':['Jupiter-20200903UT-RGB',
+                           'Jupiter-20200903UT-ClrSlp',
+                           'Jupiter-20200903UT-NH3Abs',
+                           'Jupiter-20200903UT-889CH4',
+                           'Jupiter-20200903UT-NH3Abs'],
+             '20200904UT':['Jupiter-20200904UT-RGB',
+                           'Jupiter-20200904UT-ClrSlp',
+                           'Jupiter-20200904UT-NH3Abs',
+                           'Jupiter-20200904UT-889CH4',
+                           'Jupiter-20200904UT-NH3Abs'],
+             '20200913UT':['Jupiter-20200913UT-RGB',
+                           'Jupiter-20200913UT-ClrSlp',
+                           'Jupiter-20200913UT-NH3Abs',
+                           'Jupiter-20200913UT-889CH4',
+                           'Jupiter-20200904UT-NH3Abs'],
+             '20200914UT':['Jupiter-20200914UT-RGB',
+                           'Jupiter-20200914UT-ClrSlp',
+                           'Jupiter-20200914UT-NH3Abs',
+                           'Jupiter-20200914UT-889CH4',
+                           'Jupiter-20200904UT-NH3Abs'],
+             '20200915UT':['Jupiter-20200915UT-RGB',
+                           'Jupiter-20200915UT-ClrSlp',
+                           'Jupiter-20200915UT-NH3Abs656',
+                           'Jupiter-20200915UT-NH3Abs658',
+                           'Jupiter-20200915UT-889CH4'],
+             '20200924UT':['Jupiter-20200924UT-RGB',
+                           'Jupiter-20200924UT-ClrSlp',
+                           'Jupiter-20200924UT-NH3Abs656',
+                           'Jupiter-20200924UT-NH3Abs672',
+                           'Jupiter-20200924UT-889CH4']}
     
     PlotTypes=["R(685)GB","685/550","656/647","889","380"]
 
@@ -56,13 +94,15 @@ def AmmoniaMaps():
         for PlotID in PlotIDs[Date]:
             print "PlotID,iplot=",PlotID,iplot
             if First:
-                fig=pl.figure(figsize=(8.0, 2.0), dpi=150, facecolor="white")
+                #fig=pl.figure(figsize=(8.0, 2.0), dpi=150, facecolor="white")
+                fig=pl.figure(figsize=(3.0, 4.5), dpi=150, facecolor="white")
                 First=False
             
             MapSetup.loadplotparams(drive,PlotID,"Map")
             if iplot>1:
                 ytk=False
-            MapSetup.Setup_CaratoPy_Map("PC",1,5,iplot,ytk,ptitle=PlotTypes[iplot-1])
+            #MapSetup.Setup_CaratoPy_Map("PC",1,5,iplot,ytk,ptitle=PlotTypes[iplot-1])
+            MapSetup.Setup_CaratoPy_Map("PC",3,2,iplot,ytk,ptitle=PlotTypes[iplot-1])
             #if MapSetup.ColorPlane=="Grey":
             #    test=nd.imread(drive+path+MapSetup.DataFile,flatten=True)
             #elif MapSetup.ColorPlane<>"Grey":
@@ -78,7 +118,8 @@ def AmmoniaMaps():
                 print MapSetup.ColorPlane
                 if MapSetup.ColorPlane=="RGB":
                     #test_patch=np.copy(test[90-int(MapSetup.Y1):90-int(MapSetup.Y0),:,:])
-                    test_patch=np.copy(test[90-int(MapSetup.Y1):90-int(MapSetup.Y0),180+int(MapSetup.X0):180+int(MapSetup.X1),:])
+                    test_patch=np.copy(test[90-int(MapSetup.Y1):90-int(MapSetup.Y0),
+                                            180+int(MapSetup.X0):180+int(MapSetup.X1),:])
                     print test_patch.shape
                 if MapSetup.ColorPlane=="RED":
                     test_patch=test[90-int(MapSetup.Y1):90-int(MapSetup.Y0),:,0]
@@ -88,7 +129,8 @@ def AmmoniaMaps():
                     test_patch=test[90-int(MapSetup.Y1):90-int(MapSetup.Y0),:,2]      
             else:
                 if MapSetup.ColorPlane=="Grey":
-                    test_patch=np.copy(test[90-int(MapSetup.Y1):90-int(MapSetup.Y0),180+int(MapSetup.X0):180+int(MapSetup.X1)])
+                    test_patch=np.copy(test[90-int(MapSetup.Y1):90-int(MapSetup.Y0),
+                                            180+int(MapSetup.X0):180+int(MapSetup.X1)])
                 
             print "test_extent=",test_extent
             if "889CH4" in PlotID or "380NUV" in PlotID:
@@ -98,10 +140,11 @@ def AmmoniaMaps():
             pl.imshow(test_patch, clrtbl,origin='upper', transform=ccrs.PlateCarree(), extent=test_extent)
             #if (iplot > 1):
                 #pl.yticklabels([])
-            pl.subplots_adjust(left=0.08, bottom=0.14, right=0.98, top=0.92,
-                        wspace=None, hspace=None)
+            pl.subplots_adjust(left=0.08, bottom=0.14, right=1.0, top=0.92,
+                        wspace=-0.0, hspace=0.07)
             iplot=iplot+1
             
+        #fig.tight_layout()
         pl.annotate(Date[0:len(Date)-2], xy=(0.005,0.98),xycoords='figure fraction', horizontalalignment='left', 
                     verticalalignment='top',color='b')
        
