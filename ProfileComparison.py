@@ -47,7 +47,8 @@ import scipy.stats as ST
 ref_path='F:/Astronomy/Projects/SAS 2021 Ammonia/'
 map_path='F:/Astronomy/Projects/Planets/Jupiter/Imaging Data/Mapping/'
 filenames=['TEXES-CIRS-blk-TEXES.txt','TEXES-CIRS-red-CIRS.txt',
-           'Profile of 2020-09-02 to 15 NH3Abs map stack.csv']
+           'Profile of 2020-09-02 to 15 NH3Abs map stack.csv',
+           'Profile of 2020-09-02 to 15 NH3Abs map stack narrow.csv']
 
 #### SET UP CUMULATIVE CANVAS AND PLOT
 
@@ -73,6 +74,11 @@ latgrid,tmpsig=CNRJ.uniform_lat_grid(ST2000XMRef[:,0],ST2000XMRef[:,1],Fine=True
 ST2000XMGrid[:,0]=latgrid[:]
 ST2000XMGrid[:,1]=tmpsig[:]
 
+ST2000XMnRef = genfromtxt(map_path+filenames[3], delimiter=',')
+ST2000XMnGrid=np.zeros((181,2))
+latgrid,tmpsig=CNRJ.uniform_lat_grid(ST2000XMnRef[:,0],ST2000XMnRef[:,1],Fine=True)
+ST2000XMnGrid[:,0]=latgrid[:]
+ST2000XMnGrid[:,1]=tmpsig[:]
 
 pl.figure(figsize=(6.0, 4.0), dpi=150, facecolor="white")
 
@@ -101,6 +107,7 @@ pl.xlabel("Latitude (deg)",fontsize=8)
 pl.plot(TEXESGrid[:,0],TEXESGrid[:,1],color='k',label='TEXES',linewidth=0.5)
 pl.plot(CIRSGrid[:,0],CIRSGrid[:,1],color='r',label='CIRS',linewidth=0.5)
 pl.plot(ST2000XMGrid[:,0],1.5*ST2000XMGrid[:,1]-170.,color='g',label='ST2000XM')
+#pl.plot(ST2000XMnGrid[:,0],1.5*ST2000XMnGrid[:,1]-170.,color='b',label='ST2000XMn')
 #pl.title(date)
 pl.legend()
 #AX.plot(latgrid,AvgSignal,color='r',label='NH3/HIA')

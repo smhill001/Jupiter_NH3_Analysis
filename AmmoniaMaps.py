@@ -29,21 +29,25 @@ def AmmoniaMaps():
            "20200924UT"]
     
     PlotIDs={'20200720UT':['Jupiter-20200720UT-RGB',
+                           'Jupiter-20200720UT-RGBmono',
                            'Jupiter-20200720UT-ClrSlp',
                            'Jupiter-20200720UT-NH3Abs',
                            'Jupiter-20200720UT-889CH4',
                            'Jupiter-20200720UT-380NUV'],
              '20200729UT':['Jupiter-20200729UT-RGB',
+                           'Jupiter-20200729UT-RGBmono',
                            'Jupiter-20200729UT-ClrSlp',
                            'Jupiter-20200729UT-NH3Abs',
                            'Jupiter-20200729UT-889CH4',
                            'Jupiter-20200729UT-380NUV'],
              '20200730UT':['Jupiter-20200730UT-RGB',
+                           'Jupiter-20200730UT-RGBmono',
                            'Jupiter-20200730UT-ClrSlp',
                            'Jupiter-20200730UT-NH3Abs',
                            'Jupiter-20200730UT-889CH4',
                            'Jupiter-20200730UT-380NUV'],
              '20200731UT':['Jupiter-20200731UT-RGB',
+                           'Jupiter-20200731UT-RGBmono',
                            'Jupiter-20200731UT-ClrSlp',
                            'Jupiter-20200731UT-NH3Abs',
                            'Jupiter-20200731UT-889CH4',
@@ -84,7 +88,7 @@ def AmmoniaMaps():
                            'Jupiter-20200924UT-NH3Abs672',
                            'Jupiter-20200924UT-889CH4']}
     
-    PlotTypes=["R(685)GB","685/550","656/647","889","380"]
+    PlotTypes=["R(685)GB","RGBmono","685/550","656/647","889","380"]
 
     MapSetup=PU.PlotSetup("f:/Astronomy/Python Play/PlanetMaps/MapConfig.txt")
     for Date in Dates:
@@ -95,14 +99,20 @@ def AmmoniaMaps():
             print "PlotID,iplot=",PlotID,iplot
             if First:
                 #fig=pl.figure(figsize=(8.0, 2.0), dpi=150, facecolor="white")
-                fig=pl.figure(figsize=(3.0, 4.5), dpi=150, facecolor="white")
+                fig=pl.figure(figsize=(3.7,6.5), dpi=150, facecolor="white")
                 First=False
             
             MapSetup.loadplotparams(drive,PlotID,"Map")
-            if iplot>1:
+            if iplot % 2 == 0:
                 ytk=False
+            else:
+                ytk=True
+            if iplot > 4:
+                xtk=True
+            else:
+                xtk=False
             #MapSetup.Setup_CaratoPy_Map("PC",1,5,iplot,ytk,ptitle=PlotTypes[iplot-1])
-            MapSetup.Setup_CaratoPy_Map("PC",3,2,iplot,ytk,ptitle=PlotTypes[iplot-1])
+            MapSetup.Setup_CaratoPy_Map("PC",3,2,iplot,xtk,ytk,ptitle=PlotTypes[iplot-1])
             #if MapSetup.ColorPlane=="Grey":
             #    test=nd.imread(drive+path+MapSetup.DataFile,flatten=True)
             #elif MapSetup.ColorPlane<>"Grey":
@@ -133,15 +143,15 @@ def AmmoniaMaps():
                                             180+int(MapSetup.X0):180+int(MapSetup.X1)])
                 
             print "test_extent=",test_extent
-            if "889CH4" in PlotID or "380NUV" in PlotID:
+            if "889CH4" in PlotID or "380NUV"in PlotID or "RGBmono" in PlotID:
                 clrtbl='gist_heat'
             else:
                 clrtbl='gist_heat_r'
             pl.imshow(test_patch, clrtbl,origin='upper', transform=ccrs.PlateCarree(), extent=test_extent)
             #if (iplot > 1):
                 #pl.yticklabels([])
-            pl.subplots_adjust(left=0.08, bottom=0.14, right=1.0, top=0.92,
-                        wspace=-0.0, hspace=0.07)
+            pl.subplots_adjust(left=0.10, bottom=0.10, right=1.0, top=0.92,
+                        wspace=0.0, hspace=0.25)
             iplot=iplot+1
             
         #fig.tight_layout()
