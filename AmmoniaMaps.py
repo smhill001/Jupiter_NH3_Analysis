@@ -5,7 +5,7 @@ Created on Mon Oct 29 12:49:14 2018
 @author: Steven Hill
 """
 
-def AmmoniaMaps():
+def AmmoniaMaps(coords='map'):
     import sys
     drive='f:'
     sys.path.append(drive+'\\Astronomy\Python Play')
@@ -20,13 +20,14 @@ def AmmoniaMaps():
     import pylab as pl
     import numpy as np
     import exifread
+    from PIL import Image
     
     drive="f:"
     path="/Astronomy/Projects/Planets/Jupiter/Imaging Data/Mapping/"
     
     Dates=["20200720UT","20200729UT","20200730UT","20200731UT","20200902UT",
-           "20200903UT","20200904UT","20200913UT","20200914UT","20200915UT",
-           "20200924UT"]
+           "20200903UT","20200904UT","20200913UT","20200914UT","20200915UT"]#,
+           #"20200924UT"]
     
     PlotIDs={'20200720UT':['Jupiter-20200720UT-RGB',
                            'Jupiter-20200720UT-RGBmono',
@@ -53,43 +54,46 @@ def AmmoniaMaps():
                            'Jupiter-20200731UT-889CH4',
                            'Jupiter-20200731UT-380NUV'],
              '20200902UT':['Jupiter-20200902UT-RGB',
+                           'Jupiter-20200902UT-RGBmono',
                            'Jupiter-20200902UT-ClrSlp',
                            'Jupiter-20200902UT-NH3Abs',
-                           'Jupiter-20200902UT-889CH4',
-                           'Jupiter-20200902UT-NH3Abs'],
+                           'Jupiter-20200902UT-889CH4'],
              '20200903UT':['Jupiter-20200903UT-RGB',
+                           'Jupiter-20200903UT-RGBmono',
                            'Jupiter-20200903UT-ClrSlp',
                            'Jupiter-20200903UT-NH3Abs',
-                           'Jupiter-20200903UT-889CH4',
-                           'Jupiter-20200903UT-NH3Abs'],
+                           'Jupiter-20200903UT-889CH4'],
              '20200904UT':['Jupiter-20200904UT-RGB',
+                           'Jupiter-20200904UT-RGBmono',
                            'Jupiter-20200904UT-ClrSlp',
                            'Jupiter-20200904UT-NH3Abs',
-                           'Jupiter-20200904UT-889CH4',
-                           'Jupiter-20200904UT-NH3Abs'],
+                           'Jupiter-20200904UT-889CH4'],
              '20200913UT':['Jupiter-20200913UT-RGB',
+                           'Jupiter-20200913UT-RGBmono',
                            'Jupiter-20200913UT-ClrSlp',
                            'Jupiter-20200913UT-NH3Abs',
-                           'Jupiter-20200913UT-889CH4',
-                           'Jupiter-20200904UT-NH3Abs'],
+                           'Jupiter-20200913UT-889CH4'],
              '20200914UT':['Jupiter-20200914UT-RGB',
+                           'Jupiter-20200914UT-RGBmono',
                            'Jupiter-20200914UT-ClrSlp',
                            'Jupiter-20200914UT-NH3Abs',
-                           'Jupiter-20200914UT-889CH4',
-                           'Jupiter-20200904UT-NH3Abs'],
+                           'Jupiter-20200914UT-889CH4'],
              '20200915UT':['Jupiter-20200915UT-RGB',
+                           'Jupiter-20200915UT-RGBmono',
                            'Jupiter-20200915UT-ClrSlp',
                            'Jupiter-20200915UT-NH3Abs656',
-                           'Jupiter-20200915UT-NH3Abs658',
-                           'Jupiter-20200915UT-889CH4'],
-             '20200924UT':['Jupiter-20200924UT-RGB',
-                           'Jupiter-20200924UT-ClrSlp',
-                           'Jupiter-20200924UT-NH3Abs656',
-                           'Jupiter-20200924UT-NH3Abs672',
-                           'Jupiter-20200924UT-889CH4']}
+                           'Jupiter-20200915UT-889CH4']}
+             #'20200924UT':['Jupiter-20200924UT-RGB',
+             #              'Jupiter-20200924UT-ClrSlp',
+             #              'Jupiter-20200924UT-NH3Abs656',
+             #              'Jupiter-20200924UT-NH3Abs672',
+             #              'Jupiter-20200924UT-889CH4']}"""
     
-    PlotTypes=["R(685)GB","RGBmono","685/550","656/647","889","380"]
-
+    PlotTypes=["a) RGB","b) Reflectivity","c) Continuum Slope",
+               "d) NH3","e) 889nm","f) 380nm"]
+    stack_CCD=np.zeros((90,90))
+    stack_CMOS=np.zeros((90,90))
+    stack_ALL=np.zeros((90,90))
     MapSetup=PU.PlotSetup("f:/Astronomy/Python Play/PlanetMaps/MapConfig.txt")
     for Date in Dates:
         First=True
@@ -107,10 +111,12 @@ def AmmoniaMaps():
                 ytk=False
             else:
                 ytk=True
+            print "Date[0:6]=",Date[0:6]
+            xtk=False
+            if iplot > 3 and Date[0:6]=="202009":
+                xtk=True
             if iplot > 4:
                 xtk=True
-            else:
-                xtk=False
             #MapSetup.Setup_CaratoPy_Map("PC",1,5,iplot,ytk,ptitle=PlotTypes[iplot-1])
             MapSetup.Setup_CaratoPy_Map("PC",3,2,iplot,xtk,ytk,ptitle=PlotTypes[iplot-1])
             #if MapSetup.ColorPlane=="Grey":
@@ -143,15 +149,27 @@ def AmmoniaMaps():
                                             180+int(MapSetup.X0):180+int(MapSetup.X1)])
                 
             print "test_extent=",test_extent
+            print "test_patch.shape=",test_patch.shape
             if "889CH4" in PlotID or "380NUV"in PlotID or "RGBmono" in PlotID:
                 clrtbl='gist_heat'
             else:
                 clrtbl='gist_heat_r'
-            pl.imshow(test_patch, clrtbl,origin='upper', transform=ccrs.PlateCarree(), extent=test_extent)
-            #if (iplot > 1):
-                #pl.yticklabels([])
+                
+            if coords=='map':
+                pl.imshow(test_patch, clrtbl,origin='upper', transform=ccrs.PlateCarree(), extent=test_extent)
+            elif coords=='meridian':
+                pl.imshow(test_patch, clrtbl,origin='upper', extent=[-45.,45.,-45.,45.])
+            if coords=="20200729":
+                pl.imshow(test_patch, clrtbl,origin='upper', extent=[-14.,-104.,-45.,45.])
+
             pl.subplots_adjust(left=0.10, bottom=0.10, right=1.0, top=0.92,
                         wspace=0.0, hspace=0.25)
+            if "NH3Abs" in PlotID:
+                stack_ALL=stack_ALL+test_patch
+                if iplot <= 4:
+                    stack_CMOS=stack_CMOS+test_patch
+                elif iplot >= 5:
+                    stack_CCD=stack_CCD+test_patch
             iplot=iplot+1
             
         #fig.tight_layout()
@@ -160,4 +178,16 @@ def AmmoniaMaps():
        
         pl.savefig(drive+path+Date+"Jupiter-NH3.png",dpi=300)
     
+    ALL_stretch=np.array(255.0*stack_ALL/stack_ALL.max())
+    im = Image.fromarray(ALL_stretch.astype(int))
+    im.save(drive+path+Date+"Jupiter-NH3-ALL-Data.png")
+
+    CMOS_stretch=np.array(255.0*stack_CMOS/stack_CMOS.max())
+    im = Image.fromarray(CMOS_stretch.astype(int))
+    im.save(drive+path+Date+"Jupiter-NH3-CMOS-Data.png")
+
+    CCD_stretch=np.array(255.0*stack_CCD/stack_CCD.max())
+    im = Image.fromarray(CCD_stretch.astype(int))
+    im.save(drive+path+Date+"Jupiter-NH3-CCD-Data.png")
+
     return 0

@@ -93,12 +93,14 @@ pl.yticks(np.linspace(y0,y1,ytks, endpoint=True))
 # Set y ticks
 pl.grid(linewidth=0.2)
 pl.tick_params(axis='both', which='major', labelsize=8)
-pl.ylabel(r"$Albedo$",fontsize=8,color="black")
-pl.xlabel(r"$Wavelength (nm)$",fontsize=8)
+pl.ylabel("Albedo",fontsize=8,color="black")
+pl.xlabel("Wavelength (nm)",fontsize=8)
 
-pl.plot(Continuum_Albedo[:,0],Continuum_Albedo[:,1],label='Continuum',linewidth=1,color='b')
-pl.plot(JK[:,0],JK[:,1],label='Kark - regrid',linewidth=0.5,color='r')
-pl.plot(CH4_KarkRef1993[:,0],CH4_KarkRef1993[:,1],label='Kark - CH4',linewidth=1,color='g')
+pl.plot(Continuum_Albedo[:,0],Continuum_Albedo[:,1],label='Continuum Albedo',linewidth=1,color='b')
+pl.plot(JK[:,0],JK[:,1],label='Jupiter Albedo',linewidth=0.5,color='r')
+pl.plot(CH4_KarkRef1993[:,0],CH4_KarkRef1993[:,1],label='CH4 Abs. Coef. ',linewidth=1,color='g')
+pl.legend(fontsize=7)
+
 
 ###### Retrieve filter transmissions and convovle with disk integrated albedoes
 
@@ -160,17 +162,21 @@ pl.yticks(np.linspace(y0,y1,ytks, endpoint=True))
 # Set y ticks
 pl.grid(linewidth=0.2)
 pl.tick_params(axis='both', which='major', labelsize=8)
-pl.ylabel(r"$Albedo$",fontsize=8,color="black")
-pl.xlabel(r"$Wavelength (nm)$",fontsize=8)
-pl.plot(ContinuumProduct672[:,0],ContinuumProduct672[:,1],label='Continuum',linewidth=1,color='b')
-pl.plot(ContinuumProduct658[:,0],ContinuumProduct658[:,1],label='Continuum',linewidth=1,color='b')
-pl.plot(ContinuumProduct656[:,0],ContinuumProduct656[:,1],label='Continuum',linewidth=1,color='b')
-pl.plot(ContinuumProduct647[:,0],ContinuumProduct647[:,1],label='Continuum',linewidth=1,color='b')
+pl.ylabel("Albedo x Transmission",fontsize=8,color="black")
+pl.xlabel("Wavelength (nm)",fontsize=8)
+pl.plot(ContinuumProduct672[:,0],ContinuumProduct672[:,1],label='Continuum Albedo',linewidth=1,color='b')
+pl.plot(ContinuumProduct658[:,0],ContinuumProduct658[:,1],linewidth=1,color='b')
+pl.plot(ContinuumProduct656[:,0],ContinuumProduct656[:,1],linewidth=1,color='b')
+pl.plot(ContinuumProduct647[:,0],ContinuumProduct647[:,1],linewidth=1,color='b')
 
-pl.plot(AbsorptionProduct672[:,0],AbsorptionProduct672[:,1],label='Continuum',linewidth=0.5,color='r')
-pl.plot(AbsorptionProduct658[:,0],AbsorptionProduct658[:,1],label='Continuum',linewidth=0.5,color='r')
-pl.plot(AbsorptionProduct656[:,0],AbsorptionProduct656[:,1],label='Continuum',linewidth=0.5,color='r')
-pl.plot(AbsorptionProduct647[:,0],AbsorptionProduct647[:,1],label='Absorption',linewidth=0.5,color='r')
+pl.plot(AbsorptionProduct672[:,0],AbsorptionProduct672[:,1],label='Jupiter Albedo',linewidth=0.5,color='r')
+pl.plot(AbsorptionProduct658[:,0],AbsorptionProduct658[:,1],linewidth=0.5,color='r')
+pl.plot(AbsorptionProduct656[:,0],AbsorptionProduct656[:,1],linewidth=0.5,color='r')
+pl.plot(AbsorptionProduct647[:,0],AbsorptionProduct647[:,1],linewidth=0.5,color='r')
+
+pl.legend(fontsize=7)
+
+
 pl.savefig('F:/Astronomy/Projects/SAS 2021 Ammonia/Jupiter_NH3_Analysis/AmmoniaFilter.png',dpi=320)
 
 ###### Plot regional and moon reflectivities
@@ -182,9 +188,9 @@ pl.subplot(2,1, 1)
 x0=600.
 x1=700.
 xtks=6
-y0=0.4
-y1=0.8
-ytks=5
+y0=0.0
+y1=1.2
+ytks=7
 
 # Set x limits
 pl.xlim(x0,x1)
@@ -196,16 +202,16 @@ pl.yticks(np.linspace(y0,y1,ytks, endpoint=True))
 # Set y ticks
 pl.grid(linewidth=0.2)
 pl.tick_params(axis='both', which='major', labelsize=8)
-pl.ylabel(r"$Albedo$",fontsize=8,color="black")
-pl.xlabel(r"$Wavelength (nm)$",fontsize=8)
-
+pl.ylabel("Albedo",fontsize=8,color="black")
+pl.xlabel("Wavelength (nm)",fontsize=8)
+"""
 pl.plot(NEB[:,0],NEB[:,1],label='Dahl - NEB',linewidth=1,color='r')
 pl.plot(SEB[:,0],SEB[:,1]*0.820,label='Dahl - SEB',linewidth=1,color='g')
 pl.plot(EZ[:,0],EZ[:,1]*0.715,label='Dahl - EZ',linewidth=1,color='b')
 
 pl.plot(JK[:,0],JK[:,1],label='Kark - regrid',linewidth=1,color='0.3')
 pl.plot(Continuum_Albedo[:,0],Continuum_Albedo[:,1],label='Continuum',linewidth=1,color='0.7')
-
+"""
 
 Callisto1980 = scipy.fromfile(file="F:/Astronomy/Projects/Planets/JovianMoons/References/callisto_no_header.txt", dtype=float, count=-1, sep=" ")    
 Callisto1980=scipy.reshape(Callisto1980,[Callisto1980.size/3,3])
@@ -250,8 +256,8 @@ EuropaProduct658=GSU.SpectrumMath(Transmission658,EurGrid,"Multiply")
 EuropaProduct656=GSU.SpectrumMath(Transmission656,EurGrid,"Multiply")
 EuropaProduct647=GSU.SpectrumMath(Transmission647,EurGrid,"Multiply")
 
-#Io_leading1980 = scipy.fromfile(file="F:/Astronomy/Projects/Planets/JovianMoons/References/io.leading_no_header.txt", dtype=float, count=-1, sep=" ")    
-#Io_leading1980=scipy.reshape(Io_leading1980,[Io_leading1980.size/3,3])
+Io_leading1980 = scipy.fromfile(file="F:/Astronomy/Projects/Planets/JovianMoons/References/io.leading_no_header.txt", dtype=float, count=-1, sep=" ")    
+Io_leading1980=scipy.reshape(Io_leading1980,[Io_leading1980.size/3,3])
 
 Io_trailing1980 = scipy.fromfile(file="F:/Astronomy/Projects/Planets/JovianMoons/References/io.trailing_no_header.txt", dtype=float, count=-1, sep=" ")    
 Io_trailing1980=scipy.reshape(Io_trailing1980,[Io_trailing1980.size/3,3])
@@ -267,14 +273,20 @@ IoProduct658=GSU.SpectrumMath(Transmission658,Io_Grid,"Multiply")
 IoProduct656=GSU.SpectrumMath(Transmission656,Io_Grid,"Multiply")
 IoProduct647=GSU.SpectrumMath(Transmission647,Io_Grid,"Multiply")
 
+pl.plot(Callisto1980[:,0]*1000.,Callisto1980[:,1],label='Callisto',linewidth=1,color='b')
+pl.plot(Ganymede1980[:,0]*1000.,Ganymede1980[:,1],label='Ganymede',linewidth=1,color='g')
+pl.plot(Europa1980[:,0]*1000.,Europa1980[:,1],label='Europa',linewidth=1,color='r')
+pl.plot(Io_leading1980[:,0]*1000.,Io_leading1980[:,1],label='Io Leading',linewidth=1,linestyle='dashed',color='k')
+pl.plot(Io_trailing1980[:,0]*1000.,Io_trailing1980[:,1],label='Io Trailing',linewidth=1,color='k')
+pl.legend(fontsize=7)
 
 pl.subplot(2,1,2)
 x0=600.
 x1=700.
 xtks=6
 y0=0.0
-y1=1.1
-ytks=12
+y1=1.2
+ytks=7
 
 # Set x limits
 pl.xlim(x0,x1)
@@ -286,33 +298,30 @@ pl.yticks(np.linspace(y0,y1,ytks, endpoint=True))
 # Set y ticks
 pl.grid(linewidth=0.2)
 pl.tick_params(axis='both', which='major', labelsize=8)
-pl.ylabel(r"$Albedo$",fontsize=8,color="black")
-pl.xlabel(r"$Wavelength (nm)$",fontsize=8)
-pl.plot(Callisto1980[:,0]*1000.,Callisto1980[:,1],label='Callisto',linewidth=1,color='b')
-pl.plot(Ganymede1980[:,0]*1000.,Ganymede1980[:,1],label='Ganymede',linewidth=1,color='g')
-pl.plot(Europa1980[:,0]*1000.,Europa1980[:,1],label='Europa',linewidth=1,color='r')
-#pl.plot(Io_leading1980[:,0]*1000.,Io_leading1980[:,1],label='Io Leading',linewidth=1,color='k')
-pl.plot(Io_trailing1980[:,0]*1000.,Io_trailing1980[:,1],label='Io Trailing',linewidth=1,color='k')
+pl.ylabel("Albedo x Transmission",fontsize=8,color="black")
+pl.xlabel("Wavelength (nm)",fontsize=8)
 
 pl.plot(CallistoProduct672[:,0],CallistoProduct672[:,1],label='Callisto',linewidth=0.5,color='b')
-pl.plot(CallistoProduct658[:,0],CallistoProduct658[:,1],label='Callisto',linewidth=0.5,color='b')
-pl.plot(CallistoProduct656[:,0],CallistoProduct656[:,1],label='Callisto',linewidth=0.5,color='b')
-pl.plot(CallistoProduct647[:,0],CallistoProduct647[:,1],label='Callisto',linewidth=0.5,color='b')
+pl.plot(CallistoProduct658[:,0],CallistoProduct658[:,1],linewidth=0.5,color='b')
+pl.plot(CallistoProduct656[:,0],CallistoProduct656[:,1],linewidth=0.5,color='b')
+pl.plot(CallistoProduct647[:,0],CallistoProduct647[:,1],linewidth=0.5,color='b')
 
 pl.plot(GanymedeProduct672[:,0],GanymedeProduct672[:,1],label='Ganymede',linewidth=0.5,color='g')
-pl.plot(GanymedeProduct658[:,0],GanymedeProduct658[:,1],label='Ganymede',linewidth=0.5,color='g')
-pl.plot(GanymedeProduct656[:,0],GanymedeProduct656[:,1],label='Ganymede',linewidth=0.5,color='g')
-pl.plot(GanymedeProduct647[:,0],GanymedeProduct647[:,1],label='Ganymede',linewidth=0.5,color='g')
+pl.plot(GanymedeProduct658[:,0],GanymedeProduct658[:,1],linewidth=0.5,color='g')
+pl.plot(GanymedeProduct656[:,0],GanymedeProduct656[:,1],linewidth=0.5,color='g')
+pl.plot(GanymedeProduct647[:,0],GanymedeProduct647[:,1],linewidth=0.5,color='g')
 
 pl.plot(EuropaProduct672[:,0],EuropaProduct672[:,1],label='Europa',linewidth=0.5,color='r')
-pl.plot(EuropaProduct658[:,0],EuropaProduct658[:,1],label='Europa',linewidth=0.5,color='r')
-pl.plot(EuropaProduct656[:,0],EuropaProduct656[:,1],label='Europa',linewidth=0.5,color='r')
-pl.plot(EuropaProduct647[:,0],EuropaProduct647[:,1],label='Europa',linewidth=0.5,color='r')
+pl.plot(EuropaProduct658[:,0],EuropaProduct658[:,1],linewidth=0.5,color='r')
+pl.plot(EuropaProduct656[:,0],EuropaProduct656[:,1],linewidth=0.5,color='r')
+pl.plot(EuropaProduct647[:,0],EuropaProduct647[:,1],linewidth=0.5,color='r')
 
-pl.plot(IoProduct672[:,0],IoProduct672[:,1],label='Io',linewidth=0.5,color='k')
-pl.plot(IoProduct658[:,0],IoProduct658[:,1],label='Io',linewidth=0.5,color='k')
-pl.plot(IoProduct656[:,0],IoProduct656[:,1],label='Io',linewidth=0.5,color='k')
-pl.plot(IoProduct647[:,0],IoProduct647[:,1],label='Io',linewidth=0.5,color='k')
+pl.plot(IoProduct672[:,0],IoProduct672[:,1],label='Io Trailing',linewidth=0.5,color='k')
+pl.plot(IoProduct658[:,0],IoProduct658[:,1],linewidth=0.5,color='k')
+pl.plot(IoProduct656[:,0],IoProduct656[:,1],linewidth=0.5,color='k')
+pl.plot(IoProduct647[:,0],IoProduct647[:,1],linewidth=0.5,color='k')
+
+pl.legend(fontsize=7)
 
 pl.savefig('F:/Astronomy/Projects/SAS 2021 Ammonia/Jupiter_NH3_Analysis/ColorSlopes.png',dpi=320)
 
@@ -333,13 +342,13 @@ StartIndex656=np.where(ContinuumProduct656[:,0]==645.0)
 EndIndex656=np.where(ContinuumProduct656[:,0]==672.0)
 ContimIntegral656=sum(ContinuumProduct656[StartIndex656[0][0]:EndIndex656[0][0],1])
 AbsorpIntegral656=sum(AbsorptionProduct656[StartIndex656[0][0]:EndIndex656[0][0],1])
-
+print
 print "########### Jupiter 656NH3/656Cont"
 print "index=",StartIndex656[0][0],EndIndex656[0][0]
 print "Contin, Absorp=",ContimIntegral656,AbsorpIntegral656
 print "Ratio, 1-Ratio=",AbsorpIntegral656/ContimIntegral656,1.0-AbsorpIntegral656/ContimIntegral656
 print "1/(1-Ratio)=",1.0/(1.0-AbsorpIntegral656/ContimIntegral656)
-
+print
 print "########### Jupiter 647/656 ratios"
 print "647/656 Continuum=",ContimIntegral647/ContimIntegral656
 print "647/656 with NH3=",AbsorpIntegral647/AbsorpIntegral656
@@ -356,13 +365,13 @@ CalIntegral656=sum(CallistoProduct656[StartIndex656[0][0]:EndIndex656[0][0],1])
 GanIntegral656=sum(GanymedeProduct656[StartIndex656[0][0]:EndIndex656[0][0],1])
 EurIntegral656=sum(EuropaProduct656[StartIndex656[0][0]:EndIndex656[0][0],1])
 IoIntegral656=sum(IoProduct656[StartIndex656[0][0]:EndIndex656[0][0],1])
-
+print
 print "########### Moons 647/656"
 print "Callisto=",CalIntegral647/CalIntegral656
 print "Ganymede=",GanIntegral647/GanIntegral656
 print "Europa=",EurIntegral647/EurIntegral656
 print "Io=",IoIntegral647/IoIntegral656
-
+print
 print "########### Moons Correction Factor to Jupiter Continuum Estimate"
 print "Callisto=",(ContimIntegral647/ContimIntegral656)/(CalIntegral647/CalIntegral656)
 print "Ganymede=",(ContimIntegral647/ContimIntegral656)/(GanIntegral647/GanIntegral656)
