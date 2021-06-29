@@ -37,8 +37,14 @@ from astropy.io import ascii
 from astropy.table import Table, hstack, vstack
 from os import listdir
 import numpy as np
+from datetime import datetime
+
+###############################################################################
+# Initialize paths and set metadata for the campaign
 
 root_path='F:/Astronomy/Projects/Planets/Jupiter/Imaging Data/'
+pathout='/Astronomy/Projects/SAS 2021 Ammonia/Jupiter_NH3_Analysis/'
+
 observations={'20200902UT':{'mIDs':['1_Io','2_Europa'],
                           'moons':[[1062.392,327.706],[1242.608,333.763]],
                           'JIDs':['0_Jupiter'],
@@ -91,14 +97,24 @@ observations={'20200902UT':{'mIDs':['1_Io','2_Europa'],
                           'moons':[[615.799,614.875],[864.000,611.821]],
                           'JIDs':['0_Jupiter'],
                           'Jupiter':[[1098.101,607.210]]}}
-dates=['20200902UT','20200903UT','20200904UT','20200913UT','20200914UT',
-       '20200915UT','20200924UT','20200925UT','20201007UT','20201008UT',
-       '20201009UT']
+dates=['20200902UT','20200903UT','20200904UT','20200913UT','20200914UT']#,
+       #'20200915UT','20200924UT','20200925UT','20201007UT','20201008UT',
+       #'20201009UT']
 Names=['0_Jupiter','1_Io','2_Europa','3_Ganymede','4_Callisto',
        'Moons Ratio','Moons StdP','95% Conf','Trans647','NH3 Abs','Trans Conf']
+datetimearray=np.empty([len(dates)],dtype=datetime)
 
+###############################################################################
+# Begin loop over observing sessions (dates)
+counter=0
 First1=True
 for date in dates:
+
+    # Create plotable date array
+    datetimearray[counter]=datetime.strptime(date,'%Y%m%dUT')
+    counter=counter+1
+    
+    # Set image source path and get relevant files filtering on co-aligned files
     path=root_path+date+'/'
     filelist=listdir(path)
     FNList=[]
@@ -109,54 +125,56 @@ for date in dates:
         elif "FITS" in fn:
             if "Aligned" in fn:
                 FNList.append(fn)
-    print len(FNList)
-    print FNList
 
-    moons=observations[date]['moons']
-    mIDs=observations[date]['mIDs']
+    # Get location data Jupiter and Moons, only including observable moons for the current Session
     Jupiter=observations[date]['Jupiter']
     JIDs=observations[date]['JIDs']
-    First=True
+    moons=observations[date]['moons']
+    mIDs=observations[date]['mIDs']
     
+    ###########################################################################
+    # Loop over files of available observations and compute net rates for the current observing 
+    # session. Then add the result row for each FITS file to a summary table.
+    First=True
     for FN in FNList:
-        #print FN
         hdulist=fits.open(path+FN)
-        #print 'HI'
-        Filter=Meta.FilterParameters(hdulist[0].header['FILTER'])
-        scidata=hdulist[0].data
         header=hdulist[0].header
+        scidata=hdulist[0].data
         moonsradii=[12,20,28]
         Jupiterradii=[50,85,100]
         
-        moonsrate,WVCenter,mtable=CNRJ.ComputeNetRateJupiter(scidata,header,mIDs,moons,moonsradii,Filter)
-        Jupiterrate,WVCenter,jtable=CNRJ.ComputeNetRateJupiter(scidata,header,JIDs,Jupiter,Jupiterradii,Filter)
+        # Compute Jupiter and Moons countrates and concatenate (vertical stack)
+        # into a single table
+        moonsrate,WVCenter,mtable=CNRJ.ComputeNetRateJupiter(scidata,header,mIDs,moons,moonsradii)
+        Jupiterrate,WVCenter,jtable=CNRJ.ComputeNetRateJupiter(scidata,header,JIDs,Jupiter,Jupiterradii)
         outtable = vstack([jtable, mtable])
-        
-        pathout='/Astronomy/Projects/SAS 2021 Ammonia/Jupiter_NH3_Analysis/'
-        JFN=FN[0:17]+'-'+'Jupiter-'+hdulist[0].header['FILTER']+'-Photometry.csv'
-        #print JFN
-        #ascii.write(outtable,pathout+JFN,format='csv',overwrite=True,delimiter=',')
+               
+        # Create and load summary table. Adds a row for each (filter) observation for 
+        # a given observing session (date)
         if First:
-            #print "First"
             sumtable=outtable
             First=False
         else:
-            #print "Second"
             sumtable=vstack([sumtable,outtable])
             
+    #Write Net Counts summary table each Session with one row per Filter
     oFN=FN[0:10]+'UT-'+'Jupiter-Photometry.csv'
     ascii.write(sumtable,pathout+oFN,format='csv',overwrite=True,delimiter=',')
+    ###########################################################################
     
+    # Select Net Counts, datetimes, and targets for 647 and 656 for the current session
     mask647=(sumtable['Filter']=='647CNT')
-    #print mask647
     t647nc=sumtable[mask647]['net_count_rate']
+    t647dt=sumtable[mask647]['Date-Obs']
+
     mask656=(sumtable['Filter']=='656HIA')
-    #print mask656
     t656nc=sumtable[mask656]['net_count_rate']
+    t656dt=sumtable[mask656]['Date-Obs']
+
     targets=sumtable[mask656]['Names']
-    #print t647nc
-    #print t656nc
     
+    # Compute flux ratio for NH3 absorption as well as uncertainty statistics and load that into
+    # a new, temporary one column table.
     r647=t647nc/t656nc
     r647.name='ratio_647_over_656'
     rmean_moons=np.mean(r647[1:5])
@@ -166,7 +184,11 @@ for date in dates:
     trans647=r647[0]/rmean_moons
     NH3_abs=1.0-r647[0]/rmean_moons
     Trans_Conf=Conf_moons/rmean_moons
+    
     test=Table({'Names':np.array(targets),date:np.array(r647)},names=('Names',date))
+
+    ###########################################################################
+    # Initialize and fill the block table of all sessions belonging to the campaign
     if First1:
         XX=Table({'Names':Names})
     XX[date]=0.0
@@ -175,6 +197,7 @@ for date in dates:
         indx=np.where(XX['Names']==test['Names'][n])
         #print 'n, indx=',Names[n],n,indx      
         XX[date][indx]=test[date][n]
+        #XX[date][0]=t647dt#datetime.strptime(t647dt[0],'%Y-%m-%dT%H:%M:%S')
 
     XX[date][5]=rmean_moons
     XX[date][6]=rstd_moons
@@ -183,11 +206,6 @@ for date in dates:
     XX[date][9]=NH3_abs
     XX[date][10]=Trans_Conf
     
-      
-    print
-    #print test 
-    print
-
     First1=False
 
     """
@@ -218,14 +236,21 @@ for date in dates:
     print trans1000
     print CH4_1000_abs"""
 
+###############################################################################
+# Compute overall campaign results and statistics; create timeline plot(s);
+# and write campaign summary files.
+
 XX['Mean Ratio']=0.0
 XX['StdP Ratio']=0.0
 XX['Conf 95%']=0.0
-for i in range(0,5):
+
+pl.figure(figsize=(6,4), dpi=150, facecolor="white")
+for i in range(0,6):
     tmparr=np.zeros(len(dates))
     for j in range(0,len(dates)):
         tmparr[j]=XX[dates[j]][i]
     tmparr[tmparr == 0] = np.nan
+    
     mean_ratio=np.nanmean(tmparr)
     std_ratio=np.nanstd(tmparr)
     Conf95=std_ratio/np.sqrt(np.count_nonzero(tmparr))
@@ -234,6 +259,18 @@ for i in range(0,5):
     XX['Conf 95%'][i]=Conf95
     #print 'n, indx=',Names[n],n,indx      
     #XX['Mean Ratio'][n]=np.mean(XX[n][1:4])
+    starttime=datetime(2020,9,1,0,0,0)
+    endtime=datetime(2020,10,10,0,0,0)
+
+    pl.xlim(starttime,endtime)
+    pl.ylim(1.2,1.45)
+    if Names[i]=='0_Jupiter' or Names[i]=='Moons Ratio':
+        mkrsize=5.0
+    else:
+        mkrsize=2.0
+    pl.plot_date(datetimearray,tmparr,label=Names[i],xdate=True,fmt='o',markersize=mkrsize)
+    pl.legend(fontsize=8)
+    pl.grid('both', linewidth=0.5)
 
 
 print XX

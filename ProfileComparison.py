@@ -49,9 +49,15 @@ ref_path='F:/Astronomy/Projects/SAS 2021 Ammonia/'
 map_path='F:/Astronomy/Projects/Planets/Jupiter/Imaging Data/Mapping/'
 filenames=['TEXES-CIRS-blk-TEXES.txt',
            'TEXES-CIRS-red-CIRS.txt',
-           'Profile of 20200915UTJupiter-NH3-ALL-Data.csv',
-           'Profile of 20200915UTJupiter-NH3-CMOS-Data.csv',
-           'Profile of 20200915UTJupiter-NH3-CCD-Data.csv']
+           #'Profile of 20200915UTJupiter-NH3-ALL-Data.csv',
+           #'Profile of 20200915UTJupiter-NH3-CMOS-Data.csv',
+           #'Profile of 20200915UTJupiter-NH3-CCD-Data.csv']
+           #'Profile of 20201009UTJupiter-NH3-ALL-Data.csv',
+           #'Profile of 20201009UTJupiter-NH3-CMOS-Data.csv',
+           #'Profile of 20201009UTJupiter-NH3-CCD-Data.csv']
+           'Profile of 20210622UTJupiter-NH3-ALL-Data.csv',
+           'Profile of 20210622UTJupiter-NH3-CMOS-Data.csv',
+           'Profile of 20210622UTJupiter-NH3-CCD-Data.csv']
 
 bkgimg = mpimg.imread(ref_path+'TEXES-mirrored.JPG')
 #### SET UP CUMULATIVE CANVAS AND PLOT
@@ -120,7 +126,8 @@ pl.xlabel("Latitude (deg)",fontsize=14)
 
 pl.plot(TEXESGrid[:,0],TEXESGrid[:,1],color='k',label='TEXES',linewidth=1)
 pl.plot(CIRSGrid[:,0],CIRSGrid[:,1],color='r',label='CIRS',linewidth=1)
-pl.plot(ALLGrid[:,0],ALLGrid[:,1]*0.7+7,color='b',label='Jul 20 - Sep 15',linewidth=3)
+#pl.plot(ALLGrid[:,0],ALLGrid[:,1]*0.7+7,color='b',label='Jul 20 - Sep 15',linewidth=3)
+pl.plot(ALLGrid[:,0],ALLGrid[:,1]*0.7+5,color='b',label='Jul 20 - Sep 15',linewidth=3)
 #pl.plot(CMOSGrid[:,0],CMOSGrid[:,1]*0.7+7,color='g',label='Jul 20-31',linewidth=2)
 #pl.plot(CCDGrid[:,0],CCDGrid[:,1]*0.65+5,color='m',label='Sep 2-15',linewidth=2)
 #pl.title(date)
