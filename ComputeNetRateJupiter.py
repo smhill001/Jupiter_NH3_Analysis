@@ -42,17 +42,15 @@ def ComputeNetRateJupiter(scidata,header,IDs,positions,radii):
     Filter=Meta.FilterParameters(header['FILTER'])
     WVCenter=Filter.CenterWV###Testing Area
     
-    pl.figure(figsize=(6,4), dpi=150, facecolor="white")
+    """pl.figure(figsize=(6,4), dpi=150, facecolor="white")
     pl.imshow(scidata)
-    #pl.xlim(0, 170)
-    #pl.ylim(130, 250)
     ap_patches = apertures.plot(color='white', lw=0.5,
                            label='Photometry aperture')
     ann_patches = annulus_apertures.plot(color='red', lw=0.5,
                                     label='Background annulus')
     #labels = (ap_patches[0], ann_patches[0])
     #pl.legend(font=10)
-    
+    """
     return rate,WVCenter,phot_table
 
 def uniform_lat_grid(Latitude,Signal,Fine=False):

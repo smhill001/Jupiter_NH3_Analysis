@@ -97,9 +97,9 @@ observations={'20200902UT':{'mIDs':['1_Io','2_Europa'],
                           'moons':[[615.799,614.875],[864.000,611.821]],
                           'JIDs':['0_Jupiter'],
                           'Jupiter':[[1098.101,607.210]]}}
-dates=['20200902UT','20200903UT','20200904UT','20200913UT','20200914UT']#,
-       #'20200915UT','20200924UT','20200925UT','20201007UT','20201008UT',
-       #'20201009UT']
+dates=['20200902UT','20200903UT','20200904UT','20200913UT','20200914UT',
+       '20200915UT','20200924UT','20200925UT','20201007UT','20201008UT',
+       '20201009UT']
 Names=['0_Jupiter','1_Io','2_Europa','3_Ganymede','4_Callisto',
        'Moons Ratio','Moons StdP','95% Conf','Trans647','NH3 Abs','Trans Conf']
 datetimearray=np.empty([len(dates)],dtype=datetime)
@@ -275,3 +275,5 @@ for i in range(0,6):
 
 print XX
 ascii.write(XX,pathout+'Transmission.csv',format='csv',overwrite=True,delimiter=',')
+print pathout
+pl.savefig(pathout+"Jupiter-Photometry.png",dpi=300)

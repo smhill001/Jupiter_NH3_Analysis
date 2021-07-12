@@ -14,7 +14,7 @@ HISTORY:    This code evolved from PlanetMapTest.py committed on 2/21/2019 at
 
 """
 
-def AmmoniaMaps(coords='map'):
+def AmmoniaMaps(coords='map',cont=True,DateSelection='All'):
     import sys
     drive='f:'
     sys.path.append(drive+'\\Astronomy\Python Play')
@@ -37,16 +37,21 @@ def AmmoniaMaps(coords='map'):
     drive="f:"
     path="/Astronomy/Projects/Planets/Jupiter/Imaging Data/Mapping/"
     
-    Dates=["20200720UT","20200729UT","20200730UT","20200731UT","20200902UT",
-           "20200903UT","20200904UT","20200913UT","20200914UT","20200915UT",
-           "20200924UTa","20200924UTb","20200925UT",
-           "20201007UTa","20201007UTb","20201008UT","20201009UT","20210622UT"]
-    #Dates=["20201009UT","20210622UT"]
+    if DateSelection=='All':
+        Dates=["20200720UT","20200729UT","20200730UT","20200731UT",
+               "20200902UT","20200903UT","20200904UT",
+               "20200913UT","20200914UT","20200915UT",
+               "20200924UTa","20200924UTb","20200925UT",
+               "20201007UTa","20201007UTb","20201008UT","20201009UT",
+               "20210622UT","20210708UT"]#,"20210708UTw"]
+    else:
+        Dates=DateSelection
+    #Dates=["20201009UT","20210622UT","20210708UT","20210708UTw"]
     
     Camera=["CMOS","CMOS","CMOS","CMOS",
-            "CCD","CCD","CCD","CCD","CCD","CCD","CCD",
             "CCD","CCD","CCD","CCD","CCD","CCD",
-            "CMOS"]
+            "CCD","CCD","CCD","CCD","CCD","CCD","CCD",
+            "CMOS","CMOS","CMOS"]
     
     SessionIDs={'20200720UT':['Jupiter-20200720UT-RGB',
                            'Jupiter-20200720UT-RGBmono',
@@ -150,7 +155,19 @@ def AmmoniaMaps(coords='map'):
                            'Jupiter-20210622UT-ClrSlp',
                            'Jupiter-20210622UT-NH3Abs656',
                            'Jupiter-20210622UT-889CH4',
-                           'Jupiter-20210622UT-380NUV']}
+                           'Jupiter-20210622UT-380NUV'],
+             '20210708UT':['Jupiter-20210708UT-RGB',
+                           'Jupiter-20210708UT-RGBmono',
+                           'Jupiter-20210708UT-ClrSlp',
+                           'Jupiter-20210708UT-NH3AbsAvg',
+                           'Jupiter-20210708UT-889CH4',
+                           'Jupiter-20210708UT-380NUV'],
+             '20210708UTw':['Jupiter-20210708UT-RGBw',
+                           'Jupiter-20210708UT-RGBmonow',
+                           'Jupiter-20210708UT-ClrSlpw',
+                           'Jupiter-20210708UT-NH3AbsAvgw',
+                           'Jupiter-20210708UT-889CH4w',
+                           'Jupiter-20210708UT-380NUVw']}
     
     PlotTypes=["a) RGB","b) Reflectivity","c) Continuum Slope",
                "d) NH3","e) 889nm","f) 380nm"]
@@ -240,8 +257,10 @@ def AmmoniaMaps(coords='map'):
                 #if iSession >1:
                     #pl.contour(test_patch,origin='upper', transform=ccrs.PlateCarree(), extent=test_extent,
                     #           colors='white', alpha=0.5,levels=np.linspace(25000,65000, 4))
-                pl.contour(NH3_conv,origin='upper', transform=ccrs.PlateCarree(), extent=testNH3_extent,
-                           colors='white', alpha=0.2,levels=[28000.0,36000.0],linewidth=[0.1,0.1])
+                if cont==True:
+                    pl.contour(NH3_conv,origin='upper', transform=ccrs.PlateCarree(), extent=testNH3_extent,
+                               colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
+                               linestyles='solid')
             elif coords=='meridian':
                 pl.imshow(test_patch, clrtbl,origin='upper', extent=[-45.,45.,-45.,45.])
             if coords=="20200729":
