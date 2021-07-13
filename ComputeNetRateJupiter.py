@@ -5,7 +5,7 @@ Created on Sun Mar 21 23:45:33 2021
 @author: Steven Hill
 """
 
-def ComputeNetRateJupiter(scidata,header,IDs,positions,radii):
+def ComputeNetRateJupiter(scidata,header,TargetIDs,SessionID,positions,radii):
     from photutils import CircularAperture
     from photutils import aperture_photometry
     from photutils import CircularAnnulus
@@ -32,9 +32,10 @@ def ComputeNetRateJupiter(scidata,header,IDs,positions,radii):
     phot_table['net_count_rate'] = rate
     #print "Raw=",rawflux_table
     #print 'Bkg=',bkgflux_table
-    phot_table['Names']=IDs
+    phot_table['Names']=TargetIDs
     phot_table['Filter']=header['Filter']
     phot_table['Date-Obs']=header['MIDPOINT']
+    phot_table['SessionID']=SessionID
     phot_table.remove_column('id_bkg')
     phot_table.remove_column('xcenter_bkg')
     phot_table.remove_column('ycenter_bkg')
