@@ -113,6 +113,8 @@ Filter672 = scipy.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')
 Filter672=scipy.reshape(Filter672,[Filter672.size/2,2])
 Transmission672=GSU.SpectrumMath(Filter672,FilterOPNC,"Divide")
 
+##########
+
 FilterFile="F:/Astronomy/Projects/Planets/Mars/Spectral Data/1D Spectra/Mars20201122014325_1D_WVCal.txt"
 FilterOPNM = scipy.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
 FilterOPNM=scipy.reshape(FilterOPNM,[FilterOPNM.size/2,2])
@@ -132,15 +134,30 @@ Filter647 = scipy.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')
 Filter647=scipy.reshape(Filter647,[Filter647.size/2,2])
 Transmission647=GSU.SpectrumMath(Filter647,FilterOPNM,"Divide")
 
+##########
+
+FilterFile="F:/Astronomy/Projects/Stars/Vega/Spectral Data/1D Spectra/Vega20210727051700_1D_WVCal.txt"
+FilterOPNV = scipy.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
+FilterOPNV=scipy.reshape(FilterOPNV,[FilterOPNV.size/2,2])
+
+FilterFile="F:/Astronomy/Projects/Stars/Vega/Spectral Data/1D Spectra/Vega20210727051317_1D_WVCal.txt"
+Filter632 = scipy.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
+Filter632=scipy.reshape(Filter632,[Filter632.size/2,2])
+Transmission632=GSU.SpectrumMath(Filter632,FilterOPNC,"Divide")
+
+##########
+
 ContinuumProduct672=GSU.SpectrumMath(Transmission672,Continuum_Albedo,"Multiply")
 ContinuumProduct658=GSU.SpectrumMath(Transmission658,Continuum_Albedo,"Multiply")
 ContinuumProduct656=GSU.SpectrumMath(Transmission656,Continuum_Albedo,"Multiply")
 ContinuumProduct647=GSU.SpectrumMath(Transmission647,Continuum_Albedo,"Multiply")
+ContinuumProduct632=GSU.SpectrumMath(Transmission632,Continuum_Albedo,"Multiply")
 
 AbsorptionProduct672=GSU.SpectrumMath(Transmission672,JK,"Multiply")
 AbsorptionProduct658=GSU.SpectrumMath(Transmission658,JK,"Multiply")
 AbsorptionProduct656=GSU.SpectrumMath(Transmission656,JK,"Multiply")
 AbsorptionProduct647=GSU.SpectrumMath(Transmission647,JK,"Multiply")
+AbsorptionProduct632=GSU.SpectrumMath(Transmission632,JK,"Multiply")
 
 ###### Plot filter transmissions convolved with disk-integrated albedos
 
@@ -168,11 +185,13 @@ pl.plot(ContinuumProduct672[:,0],ContinuumProduct672[:,1],label='Continuum Albed
 pl.plot(ContinuumProduct658[:,0],ContinuumProduct658[:,1],linewidth=1,color='b')
 pl.plot(ContinuumProduct656[:,0],ContinuumProduct656[:,1],linewidth=1,color='b')
 pl.plot(ContinuumProduct647[:,0],ContinuumProduct647[:,1],linewidth=1,color='b')
+pl.plot(ContinuumProduct632[:,0],ContinuumProduct632[:,1],linewidth=1,color='b')
 
 pl.plot(AbsorptionProduct672[:,0],AbsorptionProduct672[:,1],label='Jupiter Albedo',linewidth=0.5,color='r')
 pl.plot(AbsorptionProduct658[:,0],AbsorptionProduct658[:,1],linewidth=0.5,color='r')
 pl.plot(AbsorptionProduct656[:,0],AbsorptionProduct656[:,1],linewidth=0.5,color='r')
 pl.plot(AbsorptionProduct647[:,0],AbsorptionProduct647[:,1],linewidth=0.5,color='r')
+pl.plot(AbsorptionProduct632[:,0],AbsorptionProduct632[:,1],linewidth=0.5,color='r')
 
 pl.legend(fontsize=7)
 
@@ -226,6 +245,7 @@ CallistoProduct672=GSU.SpectrumMath(Transmission672,CalGrid,"Multiply")
 CallistoProduct658=GSU.SpectrumMath(Transmission658,CalGrid,"Multiply")
 CallistoProduct656=GSU.SpectrumMath(Transmission656,CalGrid,"Multiply")
 CallistoProduct647=GSU.SpectrumMath(Transmission647,CalGrid,"Multiply")
+CallistoProduct632=GSU.SpectrumMath(Transmission632,CalGrid,"Multiply")
 
 
 Ganymede1980 = scipy.fromfile(file="F:/Astronomy/Projects/Planets/JovianMoons/References/ganymede_no_header.txt", dtype=float, count=-1, sep=" ")    
@@ -241,6 +261,7 @@ GanymedeProduct672=GSU.SpectrumMath(Transmission672,GanGrid,"Multiply")
 GanymedeProduct658=GSU.SpectrumMath(Transmission658,GanGrid,"Multiply")
 GanymedeProduct656=GSU.SpectrumMath(Transmission656,GanGrid,"Multiply")
 GanymedeProduct647=GSU.SpectrumMath(Transmission647,GanGrid,"Multiply")
+GanymedeProduct632=GSU.SpectrumMath(Transmission632,GanGrid,"Multiply")
 
 Europa1980 = scipy.fromfile(file="F:/Astronomy/Projects/Planets/JovianMoons/References/europa_no_header.txt", dtype=float, count=-1, sep=" ")    
 Europa1980=scipy.reshape(Europa1980,[Europa1980.size/3,3])
@@ -255,6 +276,7 @@ EuropaProduct672=GSU.SpectrumMath(Transmission672,EurGrid,"Multiply")
 EuropaProduct658=GSU.SpectrumMath(Transmission658,EurGrid,"Multiply")
 EuropaProduct656=GSU.SpectrumMath(Transmission656,EurGrid,"Multiply")
 EuropaProduct647=GSU.SpectrumMath(Transmission647,EurGrid,"Multiply")
+EuropaProduct632=GSU.SpectrumMath(Transmission632,EurGrid,"Multiply")
 
 Io_leading1980 = scipy.fromfile(file="F:/Astronomy/Projects/Planets/JovianMoons/References/io.leading_no_header.txt", dtype=float, count=-1, sep=" ")    
 Io_leading1980=scipy.reshape(Io_leading1980,[Io_leading1980.size/3,3])
@@ -272,6 +294,7 @@ IoProduct672=GSU.SpectrumMath(Transmission672,Io_Grid,"Multiply")
 IoProduct658=GSU.SpectrumMath(Transmission658,Io_Grid,"Multiply")
 IoProduct656=GSU.SpectrumMath(Transmission656,Io_Grid,"Multiply")
 IoProduct647=GSU.SpectrumMath(Transmission647,Io_Grid,"Multiply")
+IoProduct632=GSU.SpectrumMath(Transmission632,Io_Grid,"Multiply")
 
 pl.plot(Callisto1980[:,0]*1000.,Callisto1980[:,1],label='Callisto',linewidth=1,color='b')
 pl.plot(Ganymede1980[:,0]*1000.,Ganymede1980[:,1],label='Ganymede',linewidth=1,color='g')
@@ -305,21 +328,25 @@ pl.plot(CallistoProduct672[:,0],CallistoProduct672[:,1],label='Callisto',linewid
 pl.plot(CallistoProduct658[:,0],CallistoProduct658[:,1],linewidth=0.5,color='b')
 pl.plot(CallistoProduct656[:,0],CallistoProduct656[:,1],linewidth=0.5,color='b')
 pl.plot(CallistoProduct647[:,0],CallistoProduct647[:,1],linewidth=0.5,color='b')
+pl.plot(CallistoProduct632[:,0],CallistoProduct632[:,1],linewidth=0.5,color='b')
 
 pl.plot(GanymedeProduct672[:,0],GanymedeProduct672[:,1],label='Ganymede',linewidth=0.5,color='g')
 pl.plot(GanymedeProduct658[:,0],GanymedeProduct658[:,1],linewidth=0.5,color='g')
 pl.plot(GanymedeProduct656[:,0],GanymedeProduct656[:,1],linewidth=0.5,color='g')
 pl.plot(GanymedeProduct647[:,0],GanymedeProduct647[:,1],linewidth=0.5,color='g')
+pl.plot(GanymedeProduct632[:,0],GanymedeProduct632[:,1],linewidth=0.5,color='g')
 
 pl.plot(EuropaProduct672[:,0],EuropaProduct672[:,1],label='Europa',linewidth=0.5,color='r')
 pl.plot(EuropaProduct658[:,0],EuropaProduct658[:,1],linewidth=0.5,color='r')
 pl.plot(EuropaProduct656[:,0],EuropaProduct656[:,1],linewidth=0.5,color='r')
 pl.plot(EuropaProduct647[:,0],EuropaProduct647[:,1],linewidth=0.5,color='r')
+pl.plot(EuropaProduct632[:,0],EuropaProduct632[:,1],linewidth=0.5,color='r')
 
 pl.plot(IoProduct672[:,0],IoProduct672[:,1],label='Io Trailing',linewidth=0.5,color='k')
 pl.plot(IoProduct658[:,0],IoProduct658[:,1],linewidth=0.5,color='k')
 pl.plot(IoProduct656[:,0],IoProduct656[:,1],linewidth=0.5,color='k')
 pl.plot(IoProduct647[:,0],IoProduct647[:,1],linewidth=0.5,color='k')
+pl.plot(IoProduct632[:,0],IoProduct632[:,1],linewidth=0.5,color='k')
 
 pl.legend(fontsize=7)
 

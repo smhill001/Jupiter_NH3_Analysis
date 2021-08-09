@@ -271,8 +271,11 @@ def SummaryTablePlot(AllTable,dates,Names,datetimearray,MeasFilt,RefFilt):
     YY['Conf 95%']=0.0
     
     pl.figure(figsize=(6,4), dpi=150, facecolor="white")
+    pl.subplot(2,1,1)
     print len(dates)
-    for i in range(0,6):
+    #Loop over six parameters to plot: Jupiter, Io, Europa, Ganymede, Callisto,
+    #                                   MoonsAvg
+    for i in range(0,6):  
         tmparr=np.zeros(len(dates))
         for j in range(0,len(dates)):
             print i,j,dates[j]
@@ -293,12 +296,34 @@ def SummaryTablePlot(AllTable,dates,Names,datetimearray,MeasFilt,RefFilt):
     
         pl.xlim(starttime,endtime)
         pl.ylim(1.2,1.45)
+        #pl.ylim(0.9,1.1)
+        #pl.ylim(3.5,4.0)
         if Names[i]=='0_Jupiter' or Names[i]=='Moons Ratio':
             mkrsize=5.0
         else:
             mkrsize=2.0
         pl.plot_date(datetimearray,tmparr,label=Names[i],xdate=True,fmt='o',markersize=mkrsize)
-        pl.legend(fontsize=8)
+        pl.legend(fontsize=6,ncol=3)
+        locs,labls=pl.xticks()
+        labls=[]
+        pl.xticks(locs,labls)
         pl.grid('both', linewidth=0.5)
+    pl.title(MeasFilt+' over '+RefFilt)
+        
+      
+    for j in range(0,len(dates)):
+        print 8,j,dates[j]
+        print YY
+        tmparr[j]=YY[dates[j]][8]
+    tmparr[tmparr == 0] = np.nan
+
+    pl.subplot(2,1,2)
+    pl.xlim(starttime,endtime)
+    pl.ylim(0.9,1.1)
+    mkrsize=5.0
+    pl.plot_date(datetimearray,tmparr,label=Names[8],xdate=True,fmt='o',markersize=mkrsize)
+    pl.legend(fontsize=6)
+    pl.grid('both', linewidth=0.5)
+
         
     return YY
