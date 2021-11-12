@@ -32,7 +32,7 @@ def ComputeNetRateJupiter(scidata,header,TargetIDs,SessionID,positions,radii):
     phot_table['net_count_rate'] = rate
     #print "Raw=",rawflux_table
     #print 'Bkg=',bkgflux_table
-    phot_table['Names']=TargetIDs
+    phot_table['Target']=TargetIDs
     phot_table['Filter']=header['Filter']
     phot_table['Date-Obs']=header['MIDPOINT']
     phot_table['SessionID']=SessionID
@@ -43,7 +43,10 @@ def ComputeNetRateJupiter(scidata,header,TargetIDs,SessionID,positions,radii):
     Filter=Meta.FilterParameters(header['FILTER'])
     WVCenter=Filter.CenterWV###Testing Area
     
-    """pl.figure(figsize=(6,4), dpi=150, facecolor="white")
+    """
+    #Code to display diagnostic plots (not yet finished):
+    
+    pl.figure(figsize=(6,4), dpi=150, facecolor="white")
     pl.imshow(scidata)
     ap_patches = apertures.plot(color='white', lw=0.5,
                            label='Photometry aperture')
@@ -56,13 +59,11 @@ def ComputeNetRateJupiter(scidata,header,TargetIDs,SessionID,positions,radii):
 
 def uniform_lat_grid(Latitude,Signal,Fine=False):
     """
-    Takes an existing spectrum on a non-standard or even irregular
-    wavelength grid and performs linear interpolation to place the data
-    on one of four uniform grids:
-        1) -100 to 1100nm with 0.5nm bins (includes zeroeth order)
-        2) -100 to 1100nm with 0.1nm bins
-        3) 115 to 1062.5nm with 0.5nm bins (Pickles standard range)
-        4) 115 to 1062.5nm with 0.1nm bins 
+    Takes an existing latitude profile on a non-standard or even irregular
+    grid and performs linear interpolation to place the data
+    on one of two uniform grids:
+        1) -90 to 90 with 1 deg bins
+        2) -90 to 90 with 2 deg bins
     """
     import numpy as np
     from scipy import interpolate

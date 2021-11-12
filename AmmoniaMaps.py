@@ -11,10 +11,20 @@ HISTORY:    This code evolved from PlanetMapTest.py committed on 2/21/2019 at
             https://github.com/smhill001/PlanetMaps/blob/master/PlanetMapTest.py.
             That code provided simple equatorial and polar map views for any planet
             as well as a bit of limited patch mapping.
-
+            
+VERSION:    1.0 - Produces all CMOS maps for 2020 and 2021 and all CCD maps
+            for 2020. 
+            - Has limited or unverified capability to produce cumulative 
+              patches for meridional analysis.
+            - Does plots Cartopy longitudes, not correct Jovian longitudes
+              from WinJUPOS
+            - Poorly commented and probably has extraneous code
+            - Dependency on F:\Astronomy\Python Play\PlanetMapsMapConfig.txt
+            
+EXAMPLE:    AmmoniaMaps(DateSelection=["20210923UTa"])
 """
 
-def AmmoniaMaps(coords='map',cont=True,DateSelection='All'):
+def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscape'):
     import sys
     drive='f:'
     sys.path.append(drive+'\\Astronomy\Python Play')
@@ -43,7 +53,8 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All'):
                "20200913UT","20200914UT","20200915UT",
                "20200924UTa","20200924UTb","20200925UT",
                "20201007UTa","20201007UTb","20201008UT","20201009UT",
-               "20210622UT","20210708UT"]#,"20210708UTw"]
+               "20210622UT","20210708UT","20210719UT","20210720UT",
+               "20210910UTw","20210913UT"]#,"20210708UTw"]
     else:
         Dates=DateSelection
     #Dates=["20201009UT","20210622UT","20210708UT","20210708UTw"]
@@ -51,7 +62,8 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All'):
     Camera=["CMOS","CMOS","CMOS","CMOS",
             "CCD","CCD","CCD","CCD","CCD","CCD",
             "CCD","CCD","CCD","CCD","CCD","CCD","CCD",
-            "CMOS","CMOS","CMOS"]
+            "CMOS","CMOS","CMOS","CMOS",
+            "CMOS","CMOS"]
     
     SessionIDs={'20200720UT':['Jupiter-20200720UT-RGB',
                            'Jupiter-20200720UT-RGBmono',
@@ -167,8 +179,96 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All'):
                            'Jupiter-20210708UT-ClrSlpw',
                            'Jupiter-20210708UT-NH3AbsAvgw',
                            'Jupiter-20210708UT-889CH4w',
-                           'Jupiter-20210708UT-380NUVw']}
-    
+                           'Jupiter-20210708UT-380NUVw'],
+             '20210719UT':['Jupiter-20210719UT-RGB',
+                           'Jupiter-20210719UT-RGBmono',
+                           'Jupiter-20210719UT-ClrSlp',
+                           'Jupiter-20210719UT-NH3AbsAvg',
+                           'Jupiter-20210719UT-889CH4',
+                           'Jupiter-20210719UT-380NUV'],
+             '20210720UT':['Jupiter-20210720UT-RGB',
+                           'Jupiter-20210720UT-RGBmono',
+                           'Jupiter-20210720UT-ClrSlp',
+                           'Jupiter-20210720UT-NH3AbsAvg',
+                           'Jupiter-20210720UT-889CH4',
+                           'Jupiter-20210720UT-380NUV'],
+             '20210910UTw':['Jupiter-20210910UT-RGB',
+                           'Jupiter-20210910UT-RGBmono',
+                           'Jupiter-20210910UT-ClrSlp',
+                           'Jupiter-20210910UT-NH3AbsAvg',
+                           'Jupiter-20210910UT-889CH4',
+                           'Jupiter-20210910UT-380NUV'],
+             '20210913UTw':['Jupiter-20210913UT-RGB',
+                           'Jupiter-20210913UT-RGBmono',
+                           'Jupiter-20210913UT-ClrSlp',
+                           'Jupiter-20210913UT-NH3AbsAvg',
+                           'Jupiter-20210913UT-889CH4',
+                           'Jupiter-20210913UT-380NUV'],
+             '20210915UTw':['Jupiter-20210915UT-RGB',
+                           'Jupiter-20210915UT-RGBmono',
+                           'Jupiter-20210915UT-ClrSlp',
+                           'Jupiter-20210915UT-NH3AbsAvg',
+                           'Jupiter-20210915UT-889CH4',
+                           'Jupiter-20210915UT-380NUV'],
+             '20210919UTw':['Jupiter-20210919UT-RGBw',
+                           'Jupiter-20210919UT-RGBmonow',
+                           'Jupiter-20210919UT-ClrSlpw',
+                           'Jupiter-20210919UT-NH3AbsAvgw'],
+             '20210920UTw':['Jupiter-20210920UT-RGB',
+                           'Jupiter-20210920UT-RGBmono',
+                           'Jupiter-20210920UT-ClrSlp',
+                           'Jupiter-20210920UT-NH3AbsAvg',
+                           'Jupiter-20210920UT-889CH4',
+                           'Jupiter-20210920UT-380NUV'],
+             '20210923UTa':['Jupiter-20210923UT-RGBa',
+                           'Jupiter-20210923UT-RGBmonoa',
+                           'Jupiter-20210923UT-ClrSlpa',
+                           'Jupiter-20210923UT-NH3AbsAvga',
+                           'Jupiter-20210923UT-889CH4a',
+                           'Jupiter-20210923UT-380NUVa'],
+              '20210923UTb':['Jupiter-20210923UT-RGBb',
+                           'Jupiter-20210923UT-RGBmonob',
+                           'Jupiter-20210923UT-ClrSlpb',
+                           'Jupiter-20210923UT-NH3AbsAvgb',
+                           'Jupiter-20210923UT-889CH4b',
+                           'Jupiter-20210923UT-380NUVb'],
+              '20210926UTw':['Jupiter-20210926UT-RGBw',
+                           'Jupiter-20210926UT-RGBmonow',
+                           'Jupiter-20210926UT-ClrSlpw',
+                           'Jupiter-20210926UT-NH3AbsAvgw',
+                           'Jupiter-20210926UT-380NUVw'],
+              '20210927UTw':['Jupiter-20210927UT-RGBw',
+                           'Jupiter-20210927UT-RGBmonow',
+                           'Jupiter-20210927UT-ClrSlpw',
+                           'Jupiter-20210927UT-NH3AbsAvgw',
+                           'Jupiter-20210927UT-889CH4w',
+                           'Jupiter-20210927UT-380NUVw'],
+              '20211017UTa':['Jupiter-20211017UT-RGBa',
+                           'Jupiter-20211017UT-RGBmonoa',
+                           'Jupiter-20211017UT-ClrSlpa',
+                           'Jupiter-20211017UT-NH3AbsAvga',
+                           'Jupiter-20211017UT-889CH4a'],
+              '20211017UTb':['Jupiter-20211017UT-RGBb',
+                           'Jupiter-20211017UT-RGBmonob',
+                           'Jupiter-20211017UT-ClrSlpb',
+                           'Jupiter-20211017UT-NH3AbsAvgb',
+                           'Jupiter-20211017UT-889CH4b'],
+              '20211019UTw':['Jupiter-20211019UT-RGBw',
+                           'Jupiter-20211019UT-RGBmonow',
+                           'Jupiter-20211019UT-ClrSlpw',
+                           'Jupiter-20211019UT-NH3AbsAvgw',
+                           'Jupiter-20211019UT-889CH4w'],
+              '20211022UTa':['Jupiter-20211022UT-RGBa',
+                           'Jupiter-20211022UT-RGBmonoa',
+                           'Jupiter-20211022UT-ClrSlpa',
+                           'Jupiter-20211022UT-NH3AbsAvga',
+                           'Jupiter-20211022UT-889CH4a'],
+              '20211022UTb':['Jupiter-20211022UT-RGBb',
+                           'Jupiter-20211022UT-RGBmonob',
+                           'Jupiter-20211022UT-ClrSlpb',
+                           'Jupiter-20211022UT-NH3AbsAvgb',
+                           'Jupiter-20211022UT-889CH4b']}
+   
     PlotTypes=["a) RGB","b) Reflectivity","c) Continuum Slope",
                "d) NH3","e) 889nm","f) 380nm"]
     stack_CCD=np.zeros((90,90))
@@ -182,43 +282,56 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All'):
         First=True
         ytk=True
         iSession=1
-        print "SessionIDs[Date][4]=",SessionIDs[Date][3]
+        print "Date=",Date
+        print SessionIDs[Date]
+        print "SessionIDs[Date][3]=",SessionIDs[Date][3]
         NH3Setup.loadplotparams(drive,SessionIDs[Date][3],"Map")
         testNH3=nd.imread(drive+path+NH3Setup.DataFile,flatten=False)
         testNH3_extent=[int(NH3Setup.X0),int(NH3Setup.X1),int(NH3Setup.Y0),int(NH3Setup.Y1)]
         testNH3_patch=np.copy(testNH3[90-int(NH3Setup.Y1):90-int(NH3Setup.Y0),
                            180+int(NH3Setup.X0):180+int(NH3Setup.X1)])
         kernel = Gaussian2DKernel(1)
+        print kernel
         NH3_conv = convolve(testNH3_patch, kernel)
-        
+        print "-------------------> NH3_conv.shape",NH3_conv.shape
         #Begin Looping over individual patches or bands
         for SessionID in SessionIDs[Date]:
-            print "SessionID,iSession=",SessionID,iSession
+            #print "SessionID,iSession=",SessionID,iSession
+            #Set up figure canvas if the first map of the given session
             if First:
-                #fig=pl.figure(figsize=(8.0, 2.0), dpi=150, facecolor="white")
-                fig=pl.figure(figsize=(3.7,6.5), dpi=150, facecolor="white")
+                if orientation=='Landscape':
+                    fig=pl.figure(figsize=(6.5,3.7), dpi=150, facecolor="white") #Landscape
+                elif orientation=='Portrait':
+                    fig=pl.figure(figsize=(3.7,6.5), dpi=150, facecolor="white") #Portrait
                 First=False
-            
+            #Load map parameters from file F:\Astronomy\Python Play\PlanetMaps\MapConfig.txt
             MapSetup.loadplotparams(drive,SessionID,"Map")
-            print "*********MapSetup.DataFile= ",MapSetup.DataFile
-            if iSession % 2 == 0:
-                ytk=False
-            else:
-                ytk=True
-            print "Date[0:6]=",Date[0:6]
-            xtk=False
-            if iSession > 3 and Date[0:6]=="202009":
-                xtk=True
-            if iSession > 4:
-                xtk=True
-            #MapSetup.Setup_CaratoPy_Map("PC",1,5,iSession,ytk,ptitle=PlotTypes[iSession-1])
-            MapSetup.Setup_CaratoPy_Map("PC",3,2,iSession,xtk,ytk,ptitle=PlotTypes[iSession-1])
+            #Set tick marks according to position in map array
+            
+            if orientation=='Landscape':
+                if iSession == 1 or iSession == 4: ytk=True
+                else: ytk=False
+                xtk=False
+                if iSession > 3: xtk=True
+                MapSetup.Setup_CaratoPy_Map("PC",2,3,iSession,xtk,ytk,ptitle=PlotTypes[iSession-1])
+            elif orientation=='Portrait':
+                if iSession % 2 == 0: ytk=False
+                else: ytk=True
+                xtk=False
+                if iSession > 3 and Date[0:6]=="202009": xtk=True
+                if iSession > 4: xtk=True
+                MapSetup.Setup_CaratoPy_Map("PC",3,2,iSession,xtk,ytk,ptitle=PlotTypes[iSession-1])
+                
+            #Portrait
+            #MapSetup.Setup_CaratoPy_Map("PC",3,2,iSession,xtk,ytk,ptitle=PlotTypes[iSession-1])
+            #Landscape
+            #MapSetup.Setup_CaratoPy_Map("PC",2,3,iSession,xtk,ytk,ptitle=PlotTypes[iSession-1])
             #if MapSetup.ColorPlane=="Grey":
             #    test=nd.imread(drive+path+MapSetup.DataFile,flatten=True)
             #elif MapSetup.ColorPlane<>"Grey":
             test=nd.imread(drive+path+MapSetup.DataFile,flatten=False)
             
-            test_crs = ccrs.PlateCarree()
+            #test_crs = ccrs.PlateCarree()
             #test_extent=[-180,180,int(MapSetup.Y0),int(MapSetup.Y1)]
             test_extent=[int(MapSetup.X0),int(MapSetup.X1),int(MapSetup.Y0),int(MapSetup.Y1)]
             print int(MapSetup.X0),int(MapSetup.X1),int(MapSetup.Y0),int(MapSetup.Y1)
@@ -252,24 +365,39 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All'):
                 #clrtbl='bwr_r'
                 
             if coords=='map':
-                pl.imshow(test_patch, clrtbl,origin='upper', transform=ccrs.PlateCarree(), 
-                          extent=test_extent,vmin=0,vmax=65000)
-                #if iSession >1:
-                    #pl.contour(test_patch,origin='upper', transform=ccrs.PlateCarree(), extent=test_extent,
-                    #           colors='white', alpha=0.5,levels=np.linspace(25000,65000, 4))
+                mapshow=pl.imshow(test_patch, clrtbl,origin='upper', transform=ccrs.PlateCarree(), 
+                          extent=test_extent,vmin=0,vmax=65635)
+
+                cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], orientation='vertical',cmap='gist_heat')
+                ax=MapSetup.ax
+                cbar.ax.set_yticklabels(['0.9', '1.0', '1.1'])  # vertical colorbar
+                cbar.ax.tick_params(labelsize=7)#if iSession >1:
                 if cont==True:
                     pl.contour(NH3_conv,origin='upper', transform=ccrs.PlateCarree(), extent=testNH3_extent,
                                colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
                                linestyles='solid')
             elif coords=='meridian':
-                pl.imshow(test_patch, clrtbl,origin='upper', extent=[-45.,45.,-45.,45.])
+                mapshow=pl.imshow(test_patch, clrtbl,origin='upper', extent=[-45.,45.,-45.,45.],vmin=0,vmax=65635)
+                if iSession > 1:
+                    cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], orientation='vertical',cmap='gist_heat')
+                    ax=MapSetup.ax
+                    if iSession == 3: cbar.ax.set_yticklabels(['0.5', '1.0', '1.5'])  # vertical colorbar
+                    if iSession == 4: cbar.ax.set_yticklabels(['0.9', '1.0', '1.1'])  # vertical colorbar
+                     
+                    cbar.ax.tick_params(labelsize=6)#if iSession >1:
+                if cont==True:
+                    pl.contour(NH3_conv,origin='upper', transform=ccrs.PlateCarree(), extent=[-45.,45.,-45.,45.],
+                               colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
+                               linestyles='solid')
             if coords=="20200729":
-                pl.imshow(test_patch, clrtbl,origin='upper', extent=[-14.,-104.,-45.,45.])
+                mapshow=pl.imshow(test_patch, clrtbl,origin='upper', extent=[-14.,-104.,-45.,45.])
 
-            pl.subplots_adjust(left=0.10, bottom=0.10, right=1.0, top=0.92,
+
+            pl.subplots_adjust(left=0.05, bottom=0.10, right=0.95, top=0.92,
                         wspace=0.0, hspace=0.25)
             #STACKING OF IMAGES IF WE DO IT IN THE CODE>>>
             if "NH3Abs" in SessionID:
+                print "@@@@@@@@@@@@@@@@ Session ID:",SessionID
                 if test_patch.shape==stack_ALL.shape:
                     stack_ALL=stack_ALL+test_patch
                     if Camera[iSession-1] == "CMOS":
@@ -282,7 +410,7 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All'):
         pl.annotate(Date[0:len(Date)-2], xy=(0.005,0.98),xycoords='figure fraction', horizontalalignment='left', 
                     verticalalignment='top',color='b')
        
-        pl.savefig(drive+path+Date+"Jupiter-NH3.png",dpi=300)
+        pl.savefig(drive+path+"NH3 Map Plots/"+Date+"Jupiter-NH3.png",dpi=300)
     
     ALL_stretch=np.array(255.0*stack_ALL/stack_ALL.max())
     im = Image.fromarray(ALL_stretch.astype(int))

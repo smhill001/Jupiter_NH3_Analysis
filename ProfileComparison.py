@@ -58,9 +58,12 @@ filenames=['TEXES-CIRS-blk-TEXES.txt',
            #'Profile of 20210622UTJupiter-NH3-ALL-Data.csv',
            #'Profile of 20210622UTJupiter-NH3-CMOS-Data.csv',
            #'Profile of 20210622UTJupiter-NH3-CCD-Data.csv',
-           'Profile of 20210708UTJupiter-NH3-ALL-Data.csv',
-           'Profile of 20210708UTJupiter-NH3-CMOS-Data.csv',
-           'Profile of 20210708UTJupiter-NH3-CCD-Data.csv']
+           #'Profile of 20210708UTJupiter-NH3-ALL-Data.csv',
+           #'Profile of 20210708UTJupiter-NH3-CMOS-Data.csv',
+           #'Profile of 20210708UTJupiter-NH3-CCD-Data.csv',
+           'Profile of 20210720UTJupiter-NH3-ALL-Data.csv',
+           'Profile of 20210720UTJupiter-NH3-CMOS-Data.csv',
+           'Profile of 20210720UTJupiter-NH3-CCD-Data.csv']
 
 bkgimg = mpimg.imread(ref_path+'TEXES-mirrored.JPG')
 #### SET UP CUMULATIVE CANVAS AND PLOT
@@ -130,9 +133,10 @@ pl.xlabel("Latitude (deg)",fontsize=14)
 pl.plot(TEXESGrid[:,0],TEXESGrid[:,1],color='k',label='TEXES',linewidth=1)
 pl.plot(CIRSGrid[:,0],CIRSGrid[:,1],color='r',label='CIRS',linewidth=1)
 #pl.plot(ALLGrid[:,0],ALLGrid[:,1]*0.7+7,color='b',label='Jul 20 - Sep 15',linewidth=3)
-pl.plot(ALLGrid[:,0],ALLGrid[:,1]*0.7+5,color='b',label='Jul 20 - Jun 22',linewidth=3)
-pl.plot(CMOSGrid[:,0],CMOSGrid[:,1]*0.7+7,color='g',label='CMOS 7/20/20-7/08/21',linewidth=2)
-pl.plot(CCDGrid[:,0],CCDGrid[:,1]*0.65+5,color='m',label='CCD Sep 2-15',linewidth=2)
+pl.plot(ALLGrid[:,0],ALLGrid[:,1]*0.7-7.5,color='b',label='Jul 2020 - Jul 2021',linewidth=4)
+#pl.plot(CMOSGrid[:,0],CMOSGrid[:,1]*0.7+7,color='g',label='CMOS 7/20/20-7/08/21',linewidth=2)
+#pl.plot(CCDGrid[:,0],CCDGrid[:,1]*0.65+5,color='m',label='CCD Sep 2-15',linewidth=2)
+#pl.plot(CMOSGrid[:,0],CMOSGrid[:,1]*0.7-7.5,color='g',label='Jul 20 - Jul 21',linewidth=3)
 #pl.title(date)
 pl.legend()
 #AX.plot(latgrid,AvgSignal,color='r',label='NH3/HIA')
