@@ -89,8 +89,8 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
     print "############################"
 
     #Set up labels for the six kinds of maps
-    PlotTypes=["a) RGB","b) Reflectivity","c) Continuum Slope",
-               "d) NH3","e) 889nm","f) 380nm"]
+    PlotTypes=["RGB","Reflectivity","ClrSlp",
+               "NH3Abs","889CH4","380NUV"]
     
     #Create empty arrays for the aggregation of NH3 absorption patch data, to
     #  be used as input to ProfileComparison.py
@@ -117,22 +117,20 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
         print "SessionIDs[Date][3]=",SessionIDs[Date][3]
         dateconverted=Date[0:4]+"-"+Date[4:6]+"-"+Date[6:8]
         print "dateconverted=====",dateconverted
+        
         MapsforDate=[k for k in CM2 if dateconverted in k]
-        for i in MapsforDate:
-            print i
-        NH3=[k for k in MapsforDate if "NH3Abs" in k]
-        #Create smoothed contour of NH3 absorption
-        NH3Setup.loadplotparams(drive,SessionIDs[Date][3],"Map")
-        #testNH3=nd.imread(drive+path+NH3Setup.DataFile,flatten=True)*255
-        testNH3=nd.imread(drive+path+NH3[0],flatten=True)*255
+        
+        NH3Abs_fn=[k for k in MapsforDate if "NH3Abs" in k]
+        NH3Abs_map=nd.imread(drive+path+NH3Abs_fn[0],flatten=True)*255
 
-        testNH3_extent=[int(NH3Setup.X0),int(NH3Setup.X1),int(NH3Setup.Y0),int(NH3Setup.Y1)]
-        print "testNH3_extent=",testNH3_extent
+
+        #testNH3_extent=[int(NH3Setup.X0),int(NH3Setup.X1),int(NH3Setup.Y0),int(NH3Setup.Y1)]
+        #print "testNH3_extent=",testNH3_extent
         if patch_from_config_file == True:
             LatLims=[90-int(NH3Setup.Y1),90-int(NH3Setup.Y0)]
             LonLims=[360-int(NH3Setup.X0),360-int(NH3Setup.X1)]
         else:
-            strdate=NH3Setup.DataFile[0:15]
+            strdate=NH3Abs_fn[0][0:15]
             print strdate
             dates=[datetime.strptime(strdate,"%Y-%m-%d-%H%M")]
             date_list_datetime,elev_list,airmass_list,CMI_list,CMII_list,\
@@ -143,35 +141,137 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
             LatLims=[45,135]
             LonLims=[360-int(CMII_list[0]*180./np.pi+45),360-int(CMII_list[0]*180./np.pi-45)]
         
-        testNH3_patch=np.copy(testNH3[LatLims[0]:LatLims[1],LonLims[0]:LonLims[1]])
+        #Make patches
+        NH3Abs_patch=np.copy(NH3Abs_map[LatLims[0]:LatLims[1],LonLims[0]:LonLims[1]])
               
         kernel = Gaussian2DKernel(1)
         print kernel
-        NH3_conv = convolve(testNH3_patch, kernel)
-        print "-------------------> NH3_conv.shape",NH3_conv.shape
+        NH3Abs_conv = convolve(NH3Abs_patch, kernel)
+        print "-------------------> NH3_conv.shape",NH3Abs_conv.shape
+
+        """if orientation=='Landscape':
+            fig=pl.figure(figsize=(6.5,3.7), dpi=150, facecolor="white") #Landscape
+        elif orientation=='Portrait':
+            fig=pl.figure(figsize=(3.7,6.5), dpi=150, facecolor="white") #Portrait
+            ax = pl.subplot(2,3,1)
+        """
+
 
         #Begin Looping over individual patches or bands
-        for SessionID in SessionIDs[Date]:
-            #print "SessionID,iSession=",SessionID,iSession
-            #Set up figure canvas if the first map of the given session
-            if First:
-                if orientation=='Landscape':
-                    fig=pl.figure(figsize=(6.5,3.7), dpi=150, facecolor="white") #Landscape
-                elif orientation=='Portrait':
-                    fig=pl.figure(figsize=(3.7,6.5), dpi=150, facecolor="white") #Portrait
-                First=False
-            #Load map parameters from file F:\Astronomy\Python Play\PlanetMaps\MapConfig.txt
-            MapSetup.loadplotparams(drive,SessionID,"Map")
-            #Set tick marks according to position in map array
-            
+        fig,axs=pl.subplots(2,3,figsize=(6.5,4.2), dpi=150, facecolor="white",
+                            sharey=True,sharex=True)
+        fig.suptitle(dateconverted)
+        for iPlot in range(0,len(PlotTypes)):
             if orientation=='Landscape':
-                if iSession == 1 or iSession == 4: ytk=True
+                i=iPlot/3
+                j=np.mod(iPlot,3)
+                axs[i,j].grid(linewidth=0.2)
+                axs[i,j].ylim=[-45.,45.]
+                axs[i,j].xlim=[360-LonLims[0],360-LonLims[1]]
+                axs[i,j].set_xticks(np.linspace(360,0,25), minor=False)
+                axs[i,j].set_yticks(np.linspace(-45,45,7), minor=False)
+                axs[i,j].tick_params(axis='both', which='major', labelsize=7)
+                axs[i,j].set_title(PlotTypes[iPlot],fontsize=8)
+                #axs[i,j].title.set_size(7)
+                #axs[i,j].title.titlepad(0.0)
+                print "i,j=", i,j
+                #ax=pl.subplot(2, 3, iPlot+1)
+                print iPlot,PlotTypes[iPlot]
+                if PlotTypes[iPlot] in ["889CH4","380NUV","Reflectivity"]:
+                    clrtbl='gist_heat'
+                    #clrtbl='bwr'
+                else:
+                    clrtbl='gist_heat_r'
+                    #clrtbl='bwr_r'
+
+                if PlotTypes[iPlot] in ["ClrSlp","NH3Abs","889CH4","380NUV"]:
+                    fn=[k for k in MapsforDate if str(PlotTypes[iPlot]) in k]
+                    if len(fn) > 0:
+                        jmap=nd.imread(drive+path+fn[0],flatten=True)*255
+                        patch=np.copy(jmap[LatLims[0]:LatLims[1],LonLims[0]:LonLims[1]])
+    
+                        axs[i,j].set_adjustable('box-forced')
+                        mapshow=axs[i,j].imshow(patch, clrtbl, origin='upper',  
+                                   extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],
+                                           90-LatLims[1]],vmin=0,vmax=65635,
+                                           aspect="equal")
+                        cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], 
+                                           orientation='vertical',cmap='gist_heat',
+                                           ax=axs[i,j],fraction=0.046, pad=0.04)
+                        ax=axs[i,j]
+                        cbar.ax.set_yticklabels(['0.9', '1.0', '1.1'])  # vertical colorbar
+                        cbar.ax.tick_params(labelsize=7)#if iSession >1:"""
+                        if cont==True:
+                            axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],90-LatLims[1]],
+                                       colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
+                                       linestyles='solid')
+                    else:
+                        print PlotTypes[iPlot],"off"
+                        fig.delaxes(axs[i,j])
+                elif PlotTypes[iPlot] in ["Reflectivity"]:
+                    fn=[k for k in MapsforDate if "RGB" in k]
+                    if len(fn) > 0:
+                        jmap=nd.imread(drive+path+fn[0],flatten=True)*255
+                        patch=np.copy(jmap[LatLims[0]:LatLims[1],LonLims[0]:LonLims[1]])
+    
+                        axs[i,j].set_adjustable('box-forced')
+                        mapshow=axs[i,j].imshow(patch, clrtbl,origin='upper',  
+                                   extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],
+                                           90-LatLims[1]],vmin=0,vmax=65635,
+                                           aspect="equal")
+                        cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], 
+                                           orientation='vertical',cmap='gist_heat',
+                                           ax=axs[i,j],fraction=0.046, pad=0.04)
+                        ax=axs[i,j]
+                        cbar.ax.set_yticklabels(['0.9', '1.0', '1.1'])  # vertical colorbar
+                        cbar.ax.tick_params(labelsize=7)#if iSession >1:"""
+                        if cont==True:
+                            axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],90-LatLims[1]],
+                                       colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
+                                       linestyles='solid')
+                    else:
+                        print PlotTypes[iPlot],"off"
+                        fig.delaxes(axs[i,j])
+                else:
+                    fn=[k for k in MapsforDate if str(PlotTypes[iPlot]) in k]
+                    if len(fn) > 0:
+                        jmap=nd.imread(drive+path+fn[0],flatten=False)
+                        patch=np.copy(jmap[LatLims[0]:LatLims[1],LonLims[0]:LonLims[1]])
+    
+                        axs[i,j].set_adjustable('box-forced')
+                        mapshow=axs[i,j].imshow(patch, clrtbl,origin='upper',  
+                                   extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],
+                                           90-LatLims[1]],vmin=0,vmax=65635,
+                                           aspect="equal")
+                        
+                        cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], 
+                                           orientation="vertical",cmap='gist_heat',
+                                           ax=axs[i,j],fraction=0.046, pad=0.04)
+                        ax=axs[i,j]
+                        cbar.ax.set_yticklabels(['0.9', '1.0', '1.1'])  # vertical colorbar
+                        cbar.ax.tick_params(labelsize=7)#if iSession >1:
+                        if cont==True:
+                            axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],90-LatLims[1]],
+                                       colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
+                                       linestyles='solid')
+                    else:
+                        print PlotTypes[iPlot],"off"
+                        fig.delaxes(axs[i,j])
+
+        pl.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.92,
+                    wspace=0.25, hspace=0.1)
+
+        """for ax in axs.flat:
+                    ax.label_outer()
+        if iPlot == 1 or iPlot == 4: ytk=True
                 else: ytk=False
                 xtk=False
                 if iSession > 3: xtk=True
                 MapSetup.Setup_SimpleCyl_Map(2,3,iSession,xtk,ytk,ptitle=PlotTypes[iSession-1])
+                ax = pl.subplot(3,2,ptitle=PlotTypes(iPlot))
             elif orientation=='Portrait':
-                if iSession % 2 == 0: ytk=False
+                fig=pl.figure(figsize=(3.7,6.5), dpi=150, facecolor="white") #Landscape
+                if iPlot % 2 == 0: ytk=False
                 else: ytk=True
                 xtk=False
                 if iSession > 3 and Date[0:6]=="202009": xtk=True
@@ -243,7 +343,7 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
                 cbar.ax.set_yticklabels(['0.9', '1.0', '1.1'])  # vertical colorbar
                 cbar.ax.tick_params(labelsize=7)#if iSession >1:
                 if cont==True:
-                    pl.contour(NH3_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],90-LatLims[1]],
+                    pl.contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],90-LatLims[1]],
                                colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
                                linestyles='solid')
             elif coords=='meridian':
@@ -256,7 +356,7 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
                      
                     cbar.ax.tick_params(labelsize=6)#if iSession >1:
                 if cont==True:
-                    pl.contour(NH3_conv,origin='upper', extent=[-45.,45.,-45.,45.],
+                    pl.contour(NH3Abs_conv,origin='upper', extent=[-45.,45.,-45.,45.],
                                colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
                                linestyles='solid')
             if coords=="20200729":
@@ -294,7 +394,7 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
     CCD_stretch=np.array(255.0*stack_CCD/stack_CCD.max())
     im = Image.fromarray(CCD_stretch.astype(int))
     im.save(drive+path+Date+"Jupiter-NH3-CCD-Data.png")
-
+    """
     return 0
 
 def GetSessionIDs():
