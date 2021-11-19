@@ -180,10 +180,10 @@ def CreatePhotTable(root_path,pathout,observations,dates):
         filelist=listdir(path)
         FNList=[]
         for fn in filelist:
-            if "fit" in fn:
+            if ".fit" in fn:
                 if "Aligned" in fn:
                     FNList.append(fn)
-            elif "FITS" in fn:
+            elif ".FITS" in fn:
                 if "Aligned" in fn:
                     FNList.append(fn)
     
@@ -200,6 +200,7 @@ def CreatePhotTable(root_path,pathout,observations,dates):
         First=True    
         for FN in FNList:
             # Read FITS file and set HARDCODED radii for aperture photometry
+            print path+FN
             hdulist=fits.open(path+FN)
             header=hdulist[0].header
             scidata=hdulist[0].data
@@ -328,6 +329,14 @@ def SummaryTablePlot(AllTable,dates,MeasFilt,RefFilt):
     #      The selections are returned as single columns of data.
     #   
 
+    #Set Ratio y limits based on filter pair
+    YL={"647CNT":{"656HIA":[1.2,1.45],
+                          "672SII":[1.2,1.45],
+                          "658NII":[3.5,3.8],
+                          "632OI":[0.85,1.0]},
+                "889CH4":{"940NIR":[0.0,6.0]}}
+
+    YLR={"647CNT":[0.9,1.05],"889CH4":[0.,0.2]}                                
     for date in dates:
         print "DATE=",date
         # Create plotable date array
@@ -399,7 +408,7 @@ def SummaryTablePlot(AllTable,dates,MeasFilt,RefFilt):
     for i in range(0,6):  
         tmparr=np.zeros(len(dates))
         for j in range(0,len(dates)):
-            print i,j,dates[j]
+            print i,j,dates[j],YY[dates[j]][i]
             #print YY
             tmparr[j]=YY[dates[j]][i]
         tmparr[tmparr == 0] = np.nan
@@ -420,7 +429,7 @@ def SummaryTablePlot(AllTable,dates,MeasFilt,RefFilt):
             endtime=datetime(2021,9,10,0,0,0)
     
         pl.xlim(starttime,endtime)
-        pl.ylim(1.2,1.45)
+        pl.ylim(YL[MeasFilt][RefFilt][0],YL[MeasFilt][RefFilt][1])
         #pl.ylim(0.9,1.1)
         #pl.ylim(3.5,4.0)
         if RowNames[i]=='0_Jupiter' or RowNames[i]=='Moons Ratio':
@@ -446,7 +455,7 @@ def SummaryTablePlot(AllTable,dates,MeasFilt,RefFilt):
 
     pl.subplot(2,1,2)
     pl.xlim(starttime,endtime)
-    pl.ylim(0.9,1.05)
+    pl.ylim(YLR[MeasFilt][0],YLR[MeasFilt][1])
     mkrsize=2.0
     pl.plot_date(datetimearray,tmparr,label=RowNames[8],xdate=True,fmt='o',
                  markersize=mkrsize,color='k')
