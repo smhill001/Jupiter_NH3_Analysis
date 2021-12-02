@@ -29,7 +29,7 @@ EXAMPLE:    AmmoniaMaps(DateSelection=["2021-09-23"])
 """
 
 def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscape',
-                patch_from_config_file=True):
+                patch_from_config_file=False):
     import sys
     drive='f:'
     sys.path.append(drive+'\\Astronomy\Python Play')
