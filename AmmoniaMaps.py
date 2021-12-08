@@ -37,22 +37,23 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
     sys.path.append(drive+'\\Astronomy\Python Play\SpectroPhotometry\Spectroscopy')
     sys.path.append(drive+'\\Astronomy\Python Play\SpectroPhotometry\Spectroscopy')
     sys.path.append(drive+'\\Astronomy\Python Play\SPLibraries')
-    import matplotlib.path as mpath
+    #import matplotlib.path as mpath
 
-    import ConfigFiles as CF
+    #import ConfigFiles as CF
     import PlotUtils as PU
     import scipy.ndimage as nd
     import pylab as pl
     import numpy as np
-    import exifread
-    import png
-    from PIL import Image
+    from matplotlib.colors import ListedColormap #to hack a white cmap for the RGB image
+    #import exifread
+    #import png
+    #from PIL import Image
     from astropy.convolution import Gaussian2DKernel
     from astropy.convolution import convolve
     from datetime import datetime
     import ephem
     import EWLibV006 as EWL
-
+    import plot_TEXES_Groups as PTG
     #Data and initialization section
     drive="f:"
     path="/Astronomy/Projects/Planets/Jupiter/Imaging Data/Mapping/"
@@ -95,22 +96,23 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
     
     #Create empty arrays for the aggregation of NH3 absorption patch data, to
     #  be used as input to ProfileComparison.py
-    stack_CCD=np.zeros((90,90))
-    stack_CMOS=np.zeros((90,90))
-    stack_ALL=np.zeros((90,90))
-    
+    #stack_CCD=np.zeros((90,90))
+    #stack_CMOS=np.zeros((90,90))
+    #stack_ALL=np.zeros((90,90))
+    MeridEWArray=np.zeros((90,len(DateSelection)))
+    ZoneEWArray=np.zeros((90,len(DateSelection)))
     #Create PlotSetup objects
     # MapSetup to be looped through for each of the six map raster plots
     # NH3Setup specifically for creation of the contour overlay of NH3 
     #   absorption on all the maps.
     NH3Setup=PU.PlotSetup("f:/Astronomy/Python Play/PlanetMaps/MapConfig.txt")
-    
     #Begin looping over observing sessions
+    DateCounter=0
     for Date in DateSelection:
         #Initialize looping indices and flags
-        First=True
-        ytk=True
-        iSession=1
+        #First=True
+        #ytk=True
+        #iSession=1
         
         print "Date=",Date
         #print SessionIDs[Date]
@@ -148,10 +150,17 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
             LonLims=[360-int(CM2deg+45),360-int(CM2deg-45)]
             print "LonLims=",LonLims
         
+        if int(CM2deg)<10:
+            CM2str="00"+str(int(CM2deg))
+        elif int(CM2deg)<100:
+            CM2str="0"+str(int(CM2deg))
+        else:
+            CM2str=str(int(CM2deg))
+
         #Make patch and smooth for NH3Abs contour overlay
         NH3Abs_patch=np.copy(NH3Abs_map[LatLims[0]:LatLims[1],LonLims[0]:LonLims[1]])
         if CM2deg<45:
-            NH3Abs_patch=np.concatenate((np.copy(NH3Abs_map[LatLims[0]:LatLims[1],LonLims[0]:360]),
+            NH3Abs_patch=np.concatenate((np.copy(NH3Abs_map[LatLims[0]:LatLims[1],LonLims[0]-1:360]),
                                   np.copy(NH3Abs_map[LatLims[0]:LatLims[1],0:LonLims[1]-360])),axis=1)
         if CM2deg>315:
             NH3Abs_patch=np.concatenate((np.copy(NH3Abs_map[LatLims[0]:LatLims[1],360+LonLims[0]:360]),
@@ -160,12 +169,64 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
         print kernel
         NH3Abs_conv = convolve(NH3Abs_patch, kernel)
         print "-------------------> NH3_conv.shape",NH3Abs_conv.shape
+        
+        ############################
+        MeridProfile=np.mean(NH3Abs_patch[:,:],axis=1)
+        MeridProfile=MeridProfile*0.2/((2.0**16.)-1.0)+0.9 #Scale to original image ratio range of 0.9 to 1.1.
+        MeridTransmission=0.961*(np.flip(MeridProfile,axis=0))
+        MeridAbsorption=1.0-MeridTransmission
+        MeridEW=0.55/0.039*MeridAbsorption
+        MeridProfileStd=np.std(NH3Abs_patch[:,:],axis=1)/((2.0**16.)-1.0)*0.2
+        Meriderror=np.flip(MeridProfileStd,axis=0)
+        MeridEWerror=0.55/0.039*Meriderror
+        Lats=np.linspace(-44.5,44.5,90)
+        print DateCounter; Date
+        MeridEWArray[:,DateCounter]=MeridEW[:]
+        
+        ZoneProfile=np.mean(NH3Abs_patch[:,:],axis=0)
+        ZoneProfile=ZoneProfile*0.2/((2.0**16.)-1.0)+0.9 #Scale to original image ratio range of 0.9 to 1.1.
+        ZoneTransmission=0.961*((ZoneProfile))
+        ZoneAbsorption=1.0-ZoneTransmission
+        ZoneEW=0.55/0.039*ZoneAbsorption
+        ZoneProfileStd=np.std(NH3Abs_patch[:,:],axis=0)/((2.0**16.)-1.0)*0.2
+        Zoneerror=np.flip(ZoneProfileStd,axis=0)
+        ZoneEWerror=0.55/0.039*Zoneerror
+        Lons=np.linspace(-44.5,44.5,90)
+        ZoneEWArray[:,DateCounter]=ZoneEW[:]
+        
+        #print Lats.shape,ProfileTest.shape
+        figprof,axsprof=pl.subplots(2,1,figsize=(6.0,6.0), dpi=150, facecolor="white")
+        figprof.suptitle("Ammonia Absorption Profile",x=0.5,ha='center',color='k')
+        axsprof[0].plot(Lats,MeridEW)
+        axsprof[0].fill_between(Lats, MeridEW-MeridEWerror, MeridEW+MeridEWerror,alpha=.2)
+        axsprof[0].grid(linewidth=0.2)
+        axsprof[0].xlim=[-45.,45.]
+        axsprof[0].ylim=[0.,1.5]
+        axsprof[0].set_xticks(np.linspace(-45.,45.,7), minor=False)
+        axsprof[0].set_yticks(np.linspace(0.,1.5,7), minor=False)
+        axsprof[0].tick_params(axis='both', which='major', labelsize=7)
+        axsprof[0].set_xlabel("Planetographic Latitude (deg)",fontsize=8)
+        axsprof[0].set_ylabel("Equivalent Width (nm)",fontsize=8)
+        axsprof[0].set_title(Date+", CM2="+str(int(CM2deg))+", ASI120MM",fontsize=12)
+        
+        axsprof[1].plot(Lons,ZoneEW)
+        axsprof[1].fill_between(Lons, ZoneEW-ZoneEWerror, ZoneEW+ZoneEWerror,alpha=.2)
+        axsprof[1].grid(linewidth=0.2)
+        axsprof[1].xlim=[-45.,45.]
+        axsprof[1].ylim=[0.,1.5]
+        axsprof[1].set_xticks(np.linspace(-45.,45.,7), minor=False)
+        axsprof[1].set_yticks(np.linspace(0.,1.5,7), minor=False)
+        axsprof[1].tick_params(axis='both', which='major', labelsize=7)
+        axsprof[1].set_xlabel("Longitude (deg)",fontsize=8)
+        axsprof[1].set_ylabel("Equivalent Width (nm)",fontsize=8)
 
-
+        pl.savefig(drive+path+"NH3 Map Plots/"+Date+"-Jupiter-NH3"+"_CMII_"+
+                   CM2str+"-Profile.png",dpi=300)
+        ############################
         #Begin Looping over individual patches or bands
         fig,axs=pl.subplots(2,3,figsize=(6.5,4.2), dpi=150, facecolor="white",
                             sharey=True,sharex=True)
-        fig.suptitle(Date+", CM2="+str(int(CM2deg))+", ASI120MM",x=0.02,ha='left',color='b')
+        fig.suptitle(Date+", CM2="+str(int(CM2deg))+", ASI120MM",x=0.5,ha='center',color='k')
         for iPlot in range(0,len(PlotTypes)):
             if orientation=='Landscape':
                 i=iPlot/3
@@ -207,19 +268,22 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
                                                   np.copy(jmap[LatLims[0]:LatLims[1],0:LonLims[1]])),axis=1)
                         print patch.shape,LonLims[0],LonLims[1]
    
-                        axs[i,j].set_adjustable('box-forced')
+                        axs[i,j].set_adjustable('box-forced') 
                         mapshow=axs[i,j].imshow(patch, clrtbl, origin='upper',  
-                                   extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],
-                                           90-LatLims[1]],vmin=0,vmax=65635,
+                                   extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],
+                                           90-LatLims[0]],vmin=0,vmax=65635,
                                            aspect="equal")
                         cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], 
                                            orientation='vertical',cmap='gist_heat',
                                            ax=axs[i,j],fraction=0.046, pad=0.04)
-                        #ax=axs[i,j]
-                        cbar.ax.set_yticklabels(['0.9', '1.0', '1.1'])  # vertical colorbar
+                        
+                        if PlotTypes[iPlot] in ["NH3Abs"]:
+                            cbar.ax.set_yticklabels(['1.91', '0.55', '-0.80'])  # vertical colorbar
+                        else:
+                            cbar.ax.set_yticklabels(['0.9', '1.0', '1.1']) 
                         cbar.ax.tick_params(labelsize=7)#if iSession >1:"""
                         if cont==True:
-                            axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],90-LatLims[1]],
+                            axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],90-LatLims[0]],
                                        colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
                                        linestyles='solid')
                     else:
@@ -239,8 +303,8 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
     
                         axs[i,j].set_adjustable('box-forced')
                         mapshow=axs[i,j].imshow(patch, clrtbl,origin='upper',  
-                                   extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],
-                                           90-LatLims[1]],vmin=0,vmax=65635,
+                                   extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],
+                                           90-LatLims[0]],vmin=0,vmax=65635,
                                            aspect="equal")
                         cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], 
                                            orientation='vertical',cmap='gist_heat',
@@ -249,7 +313,7 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
                         cbar.ax.set_yticklabels(['0.9', '1.0', '1.1'])  # vertical colorbar
                         cbar.ax.tick_params(labelsize=7)#if iSession >1:"""
                         if cont==True:
-                            axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],90-LatLims[1]],
+                            axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],90-LatLims[0]],
                                        colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
                                        linestyles='solid')
                     else:
@@ -269,162 +333,67 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
     
                         axs[i,j].set_adjustable('box-forced')
                         mapshow=axs[i,j].imshow(patch, clrtbl,origin='upper',  
-                                   extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],
-                                           90-LatLims[1]],vmin=0,vmax=65635,
+                                   extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],
+                                           90-LatLims[0]],vmin=0,vmax=65635,
                                            aspect="equal")
-                        
                         cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], 
                                            orientation="vertical",cmap='gist_heat',
                                            ax=axs[i,j],fraction=0.046, pad=0.04)
                         #ax=axs[i,j]
-                        cbar.ax.set_yticklabels(['0.9', '1.0', '1.1'])  # vertical colorbar
-                        cbar.ax.tick_params(labelsize=7)#if iSession >1:
+                        #cbar.ax.set_yticklabels(['0.9', '1.0', '1.1'],color="w")  # vertical colorbar
+                        #cbar.ax.tick_params(labelsize=7,color="w")#if iSession >1:
+                        cbar.set_ticks([])
+                        cbar.outline.set_visible(False)
+                        #cbar.remove()
                         if cont==True:
-                            axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],90-LatLims[1]],
+                            axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],90-LatLims[0]],
                                        colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
                                        linestyles='solid')
                     else:
                         print PlotTypes[iPlot],"off"
                         fig.delaxes(axs[i,j])
-
+        DateCounter=DateCounter+1
         pl.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.92,
                     wspace=0.25, hspace=0.1)
-        if int(CM2deg)<10:
-            CM2str="00"+str(int(CM2deg))
-        elif int(CM2deg)<100:
-            CM2str="0"+str(int(CM2deg))
-        else:
-            CM2str=str(int(CM2deg))
             
             
-        pl.savefig(drive+path+"NH3 Map Plots/"+Date+"Jupiter-NH3"+"_CMII_"+
-                   CM2str+".png",dpi=300)
-        """for ax in axs.flat:
-                    ax.label_outer()
-        if iPlot == 1 or iPlot == 4: ytk=True
-                else: ytk=False
-                xtk=False
-                if iSession > 3: xtk=True
-                MapSetup.Setup_SimpleCyl_Map(2,3,iSession,xtk,ytk,ptitle=PlotTypes[iSession-1])
-                ax = pl.subplot(3,2,ptitle=PlotTypes(iPlot))
-            elif orientation=='Portrait':
-                fig=pl.figure(figsize=(3.7,6.5), dpi=150, facecolor="white") #Landscape
-                if iPlot % 2 == 0: ytk=False
-                else: ytk=True
-                xtk=False
-                if iSession > 3 and Date[0:6]=="202009": xtk=True
-                if iSession > 4: xtk=True
-                MapSetup.Setup_SimpleCyl_Map(3,2,iSession,xtk,ytk,ptitle=PlotTypes[iSession-1])
-                
-            #Portrait
-            #MapSetup.Setup_CaratoPy_Map("PC",3,2,iSession,xtk,ytk,ptitle=PlotTypes[iSession-1])
-            #Landscape
-            #MapSetup.Setup_CaratoPy_Map("PC",2,3,iSession,xtk,ytk,ptitle=PlotTypes[iSession-1])
-            #if MapSetup.ColorPlane=="Grey":
-            #    test=nd.imread(drive+path+MapSetup.DataFile,flatten=True)
-            #elif MapSetup.ColorPlane<>"Grey":
-            print "drive+path+MapSetup.DataFile=",drive+path+MapSetup.DataFile
-            ###################
-            #If I make this conditional on Grey vs RGB, then I could skip a
-            #  MaximDL processing step!
-            ###################
-            print "MapSetup.ColorPlane=",MapSetup.ColorPlane
-            if MapSetup.ColorPlane == "Grey":
-                test=nd.imread(drive+path+MapSetup.DataFile,flatten=True)*255
-            else:
-                test=nd.imread(drive+path+MapSetup.DataFile,flatten=False)
-            
-            #test_extent=[-180,180,int(MapSetup.Y0),int(MapSetup.Y1)]
-            test_extent=[int(MapSetup.X0),int(MapSetup.X1),int(MapSetup.Y0),int(MapSetup.Y1)]
-            print int(MapSetup.X0),int(MapSetup.X1),int(MapSetup.Y0),int(MapSetup.Y1)
-            print "BEFORE CONDITIONAL"
-            print test.shape, MapSetup.ColorPlane
-            if len(test.shape)>2:
-                print MapSetup.ColorPlane
-                if MapSetup.ColorPlane=="RGB":
-                    #test_patch=np.copy(test[90-int(MapSetup.Y1):90-int(MapSetup.Y0),:,:])
-                    test_patch=np.copy(test[LatLims[0]:LatLims[1],LonLims[0]:LonLims[1],:])
-                    print "#########Lims:",LatLims[0],LatLims[1],LonLims[0],LonLims[1]
-                   # test_patch=np.copy(test[90-int(MapSetup.Y1):90-int(MapSetup.Y0),
-                   #                         360-int(MapSetup.X0):360-int(MapSetup.X1),:])
-                    print "#########Lims:",90-int(MapSetup.Y1),90-int(MapSetup.Y0),\
-                        360-int(MapSetup.X0),360-int(MapSetup.X1)
-                    
-                    print test_patch.shape
-                if MapSetup.ColorPlane=="RED":
-                    test_patch=test[90-int(MapSetup.Y1):90-int(MapSetup.Y0),:,0]
-                if MapSetup.ColorPlane=="GRN":
-                    test_patch=test[90-int(MapSetup.Y1):90-int(MapSetup.Y0),:,1]
-                if MapSetup.ColorPlane=="BLU":
-                    test_patch=test[90-int(MapSetup.Y1):90-int(MapSetup.Y0),:,2]      
-            else:
-                if MapSetup.ColorPlane=="Grey":
-                    #test_patch=np.copy(test[90-int(MapSetup.Y1):90-int(MapSetup.Y0),
-                    #                        360-int(MapSetup.X0):360-int(MapSetup.X1)])
-                    test_patch=np.copy(test[LatLims[0]:LatLims[1],LonLims[0]:LonLims[1]])
-                
-            print "test_extent=",test_extent
-            print "test_patch.shape=",test_patch.shape
-            if "889CH4" in SessionID or "380NUV"in SessionID or "RGBmono" in SessionID:
-                clrtbl='gist_heat'
-                #clrtbl='bwr'
-            else:
-                clrtbl='gist_heat_r'
-                #clrtbl='bwr_r'
-                
-            if coords=='map':
-                mapshow=pl.imshow(test_patch, clrtbl,origin='upper',  
-                          extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],90-LatLims[1]],vmin=0,vmax=65635)
-
-                cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], orientation='vertical',cmap='gist_heat')
-                ax=MapSetup.ax
-                cbar.ax.set_yticklabels(['0.9', '1.0', '1.1'])  # vertical colorbar
-                cbar.ax.tick_params(labelsize=7)#if iSession >1:
-                if cont==True:
-                    pl.contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[0],90-LatLims[1]],
-                               colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
-                               linestyles='solid')
-            elif coords=='meridian':
-                mapshow=pl.imshow(test_patch, clrtbl,origin='upper', extent=[-45.,45.,-45.,45.],vmin=0,vmax=65635)
-                if iSession > 1:
-                    cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], orientation='vertical',cmap='gist_heat')
-                    ax=MapSetup.ax
-                    if iSession == 3: cbar.ax.set_yticklabels(['0.5', '1.0', '1.5'])  # vertical colorbar
-                    if iSession == 4: cbar.ax.set_yticklabels(['0.9', '1.0', '1.1'])  # vertical colorbar
-                     
-                    cbar.ax.tick_params(labelsize=6)#if iSession >1:
-                if cont==True:
-                    pl.contour(NH3Abs_conv,origin='upper', extent=[-45.,45.,-45.,45.],
-                               colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
-                               linestyles='solid')
-            #STACKING OF IMAGES IF WE DO IT IN THE CODE>>>
-            if "NH3Abs" in SessionID:
-                print "@@@@@@@@@@@@@@@@ Session ID:",SessionID
-                if test_patch.shape==stack_ALL.shape:
-                    stack_ALL=stack_ALL+test_patch
-                    if Camera[iSession-1] == "CMOS":
-                        stack_CMOS=stack_CMOS+test_patch
-                    elif Camera[iSession-1] == "CCD":
-                        stack_CCD=stack_CCD+test_patch
-            iSession=iSession+1
-            
-       
-        pl.savefig(drive+path+"NH3 Map Plots/"+Date+"Jupiter-NH3.png",dpi=300)
+        pl.savefig(drive+path+"NH3 Map Plots/"+Date+"-Jupiter-NH3"+"_CMII_"+
+                   CM2str+"-Map.png",dpi=300)
         
-    ###########################################################################
-    #Stretch and save average patch data for use in ProfileComparison.py
-    ALL_stretch=np.array(255.0*stack_ALL/stack_ALL.max())
-    im = Image.fromarray(ALL_stretch.astype(int))
-    im.save(drive+path+Date+"Jupiter-NH3-ALL-Data.png")
+    AvgMeridEW=np.mean(MeridEWArray[:,:],axis=1)
+    StdMeridEW=np.std(MeridEWArray[:,:],axis=1)
+    AvgZoneEW=np.mean(ZoneEWArray[:,:],axis=1)
+    StdZoneEW=np.std(ZoneEWArray[:,:],axis=1)
+    figavgprof,axsavgprof=pl.subplots(2,1,figsize=(6.0,6.0), dpi=150, facecolor="white")
+    figavgprof.suptitle("Average Ammonia Absorption Profile",x=0.5,ha='center',color='k')
+    axsavgprof[0].plot(Lats,AvgMeridEW)
+    axsavgprof[0].fill_between(Lats, AvgMeridEW-StdMeridEW, AvgMeridEW+StdMeridEW,alpha=.2)
+    axsavgprof[0].grid(linewidth=0.2)
+    axsavgprof[0].xlim=[-45.,45.]
+    axsavgprof[0].ylim=[0.,1.2]
+    axsavgprof[0].set_xticks(np.linspace(-45.,45.,7), minor=False)
+    axsavgprof[0].set_yticks(np.linspace(0.,1.2,7), minor=False)
+    axsavgprof[0].tick_params(axis='both', which='major', labelsize=7)
+    axsavgprof[0].set_xlabel("Planetographic Latitude (deg)",fontsize=8)
+    axsavgprof[0].set_ylabel("Equivalent Width (nm)",fontsize=8)
+    axsavgprof[0].set_title(Date+", CM2="+str(int(CM2deg))+", ASI120MM",fontsize=12)
+    PTG.plot_Teifel(axsavgprof[0])
+    PTG.plot_TEXES_Groups(axsavgprof[0])
 
-    CMOS_stretch=np.array(255.0*stack_CMOS/stack_CMOS.max())
-    im = Image.fromarray(CMOS_stretch.astype(int))
-    im.save(drive+path+Date+"Jupiter-NH3-CMOS-Data.png")
+    axsavgprof[1].plot(Lons,AvgZoneEW)
+    axsavgprof[1].fill_between(Lons, AvgZoneEW-StdZoneEW, AvgZoneEW+StdZoneEW,alpha=.2)
+    axsavgprof[1].grid(linewidth=0.2)
+    axsavgprof[1].xlim=[-45.,45.]
+    axsavgprof[1].ylim=[0.,1.2]
+    axsavgprof[1].set_xticks(np.linspace(-45.,45.,7), minor=False)
+    axsavgprof[1].set_yticks(np.linspace(0.,1.2,7), minor=False)
+    axsavgprof[1].tick_params(axis='both', which='major', labelsize=7)
+    axsavgprof[1].set_xlabel("Longitude (deg)",fontsize=8)
+    axsavgprof[1].set_ylabel("Equivalent Width (nm)",fontsize=8)
+    pl.savefig(drive+path+"NH3 Map Plots/Jupiter-NH3"+"_CMII_"+
+               CM2str+"-AvgProfile.png",dpi=300)
+        
 
-    CCD_stretch=np.array(255.0*stack_CCD/stack_CCD.max())
-    im = Image.fromarray(CCD_stretch.astype(int))
-    im.save(drive+path+Date+"Jupiter-NH3-CCD-Data.png")
-    """
     return 0
 
 
