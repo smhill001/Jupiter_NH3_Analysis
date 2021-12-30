@@ -5,7 +5,7 @@ Created on Sun Dec 05 08:48:16 2021
 @author: Steven Hill
 """
 
-def plot_TEXES_Groups(ax):
+def plot_TEXES_Groups(ax,clr="C2"):
     import matplotlib.pyplot as pl
     import scipy
     import numpy as np
@@ -26,14 +26,15 @@ def plot_TEXES_Groups(ax):
         data[i-1,:]=dat
     print Start,End,pressure[PL]
     latg=Centric_to_Graphic(latc)
-    scaled_data_mean=np.mean(data,axis=0)*8.0e4
-    scaled_data_std=np.std(data,axis=0)*8.0e4
-    ax.plot(latg,scaled_data_mean)
-    ax.fill_between(latg, scaled_data_mean-scaled_data_std, scaled_data_mean+scaled_data_std,alpha=.2)
+    scaled_data_mean=np.mean(data,axis=0)#*8.0e4
+    scaled_data_std=np.std(data,axis=0)#*8.0e4
+    ax.plot(latg,scaled_data_mean,label='Fletcher etal, 2016',color=clr)
+    ax.fill_between(latg, scaled_data_mean-scaled_data_std, scaled_data_mean+scaled_data_std,
+                    color=clr,alpha=0.1)
     print data[Start:End]
 
     
-def plot_Teifel(ax):
+def plot_Teifel(ax,clr='C0'):
     import matplotlib.pyplot as pl
     import scipy
     import numpy as np
@@ -42,17 +43,18 @@ def plot_Teifel(ax):
     EWs=np.array([5.92,6.78,6.75,6.35,5.38])*0.1
     #ax.scatter(Lats,EWs)
     import scipy
-    pth="F:/Astronomy/Projects/SAS 2021 Ammonia/"
+    pth="F:/Astronomy/Projects/SAS 2021 Ammonia/Jupiter_NH3_Analysis/"
     Teifel = np.array(genfromtxt(pth+"Teifel2018-Fig7.txt", delimiter=','))
     #TEXESGrid=np.zeros((181,2))
     #latgrid,tmpsig=CNRJ.uniform_lat_grid(TEXESRef[:,0],TEXESRef[:,1],Fine=True)
     #TEXESGrid[:,0]=latgrid[:]
     #TEXESGrid[:,1]=tmpsig[:]
     #print data[:]
-    ax.scatter(Teifel[4:24,0],Teifel[4:24,1]*0.1)
+    ax.scatter(Teifel[4:24,0],Teifel[4:24,1]*0.1,label='Teifel etal, 2018',color=clr)
     #pl.ylim(0.0,1.2)
 
 def Centric_to_Graphic(Latc):
+    #Formula used is from Simon and Beebe, 1996
     import numpy as np
     Req=71492.0
     Rp=66845.0

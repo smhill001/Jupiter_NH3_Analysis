@@ -28,7 +28,7 @@ VERSION:    1.0 - Produces all CMOS maps for 2020 and 2021 and all CCD maps
 EXAMPLE:    AmmoniaMaps(DateSelection=["2021-09-23"])
 """
 
-def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscape',
+def AmmoniaMaps(coords='map',cont=True,zonecorr=[0,0],DateSelection='All',orientation='Landscape',
                 patch_from_config_file=False):
     import sys
     drive='f:'
@@ -91,8 +91,11 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
     #print "############################"
 
     #Set up labels for the six kinds of maps
-    PlotTypes=["RGB","Reflectivity","ClrSlp",
-               "NH3Abs","889CH4","380NUV"]
+    #PlotTypes=["RGB","Reflectivity","ClrSlp",
+    #           "NH3Abs","889CH4","380NUV"]
+    PlotTypes=["NH3Abs","889CH4","380NUV",
+               "RGB","Reflectivity","ClrSlp"]
+               
     
     #Create empty arrays for the aggregation of NH3 absorption patch data, to
     #  be used as input to ProfileComparison.py
@@ -115,10 +118,6 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
         #iSession=1
         
         print "Date=",Date
-        #print SessionIDs[Date]
-        #print "SessionIDs[Date][3]=",SessionIDs[Date][3]
-        #dateconverted=Date[0:4]+"-"+Date[4:6]+"-"+Date[6:8]
-        #print "dateconverted=====",dateconverted
         
         MapsforDate=[k for k in CM2 if Date in k]
         
@@ -126,12 +125,11 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
             print i
         
         NH3Abs_fn=[k for k in MapsforDate if "NH3Abs" in k]
+        
         #NH3Abs_map=nd.imread(drive+path+NH3Abs_fn[0],flatten=True)*255
         tmp=load_png(drive+path+NH3Abs_fn[0])
         NH3Abs_map=tmp[:,:,0]
 
-        #testNH3_extent=[int(NH3Setup.X0),int(NH3Setup.X1),int(NH3Setup.Y0),int(NH3Setup.Y1)]
-        #print "testNH3_extent=",testNH3_extent
         if patch_from_config_file == True:
             LatLims=[90-int(NH3Setup.Y1),90-int(NH3Setup.Y0)]
             LonLims=[360-int(NH3Setup.X0),360-int(NH3Setup.X1)]
@@ -167,30 +165,28 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
                                          np.copy(NH3Abs_map[LatLims[0]:LatLims[1],0:LonLims[1]])),axis=1)
         kernel = Gaussian2DKernel(1)
         print kernel
-        NH3Abs_conv = convolve(NH3Abs_patch, kernel)
+        NH3Abs_patch_EW=(1.0-0.961*(NH3Abs_patch*0.2/((2.0**16.)-1.0)+0.9))*0.55/0.039
+        #Empirical longitudinal limb darkening correction
+        if zonecorr[:]==[0,0]:
+            ZoneLimbDarkCorr=np.ones(90)
+        else:
+            ZoneLimbDarkCorr=np.mean(NH3Abs_patch_EW[45-zonecorr[0]:45-zonecorr[1],:],axis=0) ###To flip or not to flip in long?
+        ZoneLimbDarkCorr=ZoneLimbDarkCorr/np.max(ZoneLimbDarkCorr)
+        print ZoneLimbDarkCorr.shape,NH3Abs_patch_EW.shape
+        NH3Abs_patch_EW_corr=NH3Abs_patch_EW/ZoneLimbDarkCorr[None,:]
+
+        NH3Abs_conv = convolve(NH3Abs_patch_EW_corr, kernel)
         print "-------------------> NH3_conv.shape",NH3Abs_conv.shape
         
         ############################
-        MeridProfile=np.mean(NH3Abs_patch[:,:],axis=1)
-        MeridProfile=MeridProfile*0.2/((2.0**16.)-1.0)+0.9 #Scale to original image ratio range of 0.9 to 1.1.
-        MeridTransmission=0.961*(np.flip(MeridProfile,axis=0))
-        MeridAbsorption=1.0-MeridTransmission
-        MeridEW=0.55/0.039*MeridAbsorption
-        MeridProfileStd=np.std(NH3Abs_patch[:,:],axis=1)/((2.0**16.)-1.0)*0.2
-        Meriderror=np.flip(MeridProfileStd,axis=0)
-        MeridEWerror=0.55/0.039*Meriderror
+        MeridEW=np.flip(np.mean(NH3Abs_patch_EW[:,:],axis=1),axis=0)
+        MeridEWerror=np.flip(np.std(NH3Abs_patch_EW[:,:],axis=1),axis=0)
         Lats=np.linspace(-44.5,44.5,90)
         print DateCounter; Date
         MeridEWArray[:,DateCounter]=MeridEW[:]
         
-        ZoneProfile=np.mean(NH3Abs_patch[:,:],axis=0)
-        ZoneProfile=ZoneProfile*0.2/((2.0**16.)-1.0)+0.9 #Scale to original image ratio range of 0.9 to 1.1.
-        ZoneTransmission=0.961*((ZoneProfile))
-        ZoneAbsorption=1.0-ZoneTransmission
-        ZoneEW=0.55/0.039*ZoneAbsorption
-        ZoneProfileStd=np.std(NH3Abs_patch[:,:],axis=0)/((2.0**16.)-1.0)*0.2
-        Zoneerror=np.flip(ZoneProfileStd,axis=0)
-        ZoneEWerror=0.55/0.039*Zoneerror
+        ZoneEW=np.mean(NH3Abs_patch_EW[:,:],axis=0) ###To flip or not to flip in long?
+        ZoneEWerror=np.std(NH3Abs_patch_EW[:,:],axis=0)
         Lons=np.linspace(-44.5,44.5,90)
         ZoneEWArray[:,DateCounter]=ZoneEW[:]
         
@@ -224,20 +220,28 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
                    CM2str+"-Profile.png",dpi=300)
         ############################
         #Begin Looping over individual patches or bands
-        fig,axs=pl.subplots(2,3,figsize=(6.5,4.2), dpi=150, facecolor="white",
+        fig,axs=pl.subplots(2,3,figsize=(6.0,4.5), dpi=150, facecolor="white",
                             sharey=True,sharex=True)
-        fig.suptitle(Date+", CM2="+str(int(CM2deg))+", ASI120MM",x=0.5,ha='center',color='k')
+        fig.suptitle(Date+", CM2="+str(int(CM2deg)),x=0.5,ha='center',color='k')
         for iPlot in range(0,len(PlotTypes)):
+            print "PlotTypes[i]=============",PlotTypes[iPlot]
             if orientation=='Landscape':
                 i=iPlot/3
                 j=np.mod(iPlot,3)
                 axs[i,j].grid(linewidth=0.2)
                 axs[i,j].ylim=[-45.,45.]
                 axs[i,j].xlim=[360-LonLims[0],360-LonLims[1]]
-                axs[i,j].set_xticks(np.linspace(360,0,25), minor=False)
+                axs[i,j].set_xticks(np.linspace(450,0,31), minor=False)
+                xticklabels=np.array(np.mod(np.linspace(450,0,31),360))
+                axs[i,j].set_xticklabels(xticklabels.astype(int))
                 axs[i,j].set_yticks(np.linspace(-45,45,7), minor=False)
                 axs[i,j].tick_params(axis='both', which='major', labelsize=7)
-                axs[i,j].set_title(PlotTypes[iPlot],fontsize=8)
+                print "PlotTypes[iPlot]=============",PlotTypes[iPlot]
+                if PlotTypes[iPlot] in ["NH3Abs"]:
+                    axs[i,j].set_title(PlotTypes[iPlot]+" EW(nm)",fontsize=8)
+                else:
+                    axs[i,j].set_title(PlotTypes[iPlot],fontsize=8)
+                    
                 #axs[i,j].title.set_size(7)
                 #axs[i,j].title.titlepad(0.0)
                 print "i,j=", i,j
@@ -250,7 +254,8 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
                     clrtbl='gist_heat_r'
                     #clrtbl='bwr_r'
 
-                if PlotTypes[iPlot] in ["ClrSlp","NH3Abs","889CH4","380NUV"]:
+                if PlotTypes[iPlot] in ["ClrSlp","889CH4","380NUV"]:
+                #if PlotTypes[iPlot] in ["ClrSlp","NH3Abs","889CH4","380NUV"]:
                     fn=[k for k in MapsforDate if str(PlotTypes[iPlot]) in k]
                     if len(fn) > 0:
                         #jmap=nd.imread(drive+path+fn[0],flatten=True)*255
@@ -273,7 +278,7 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
                                    extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],
                                            90-LatLims[0]],vmin=0,vmax=65635,
                                            aspect="equal")
-                        cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], 
+                        """cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], 
                                            orientation='vertical',cmap='gist_heat',
                                            ax=axs[i,j],fraction=0.046, pad=0.04)
                         
@@ -283,9 +288,59 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
                             cbar.ax.set_yticklabels(['0.9', '1.0', '1.1']) 
                         cbar.ax.tick_params(labelsize=7)#if iSession >1:"""
                         if cont==True:
-                            axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],90-LatLims[0]],
-                                       colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
-                                       linestyles='solid')
+                            temp=make_contours(axs[i,j],NH3Abs_conv,LatLims,LonLims)
+                            """cs=axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],90-LatLims[0]],
+                                       colors=['w','w','w'], alpha=0.5,levels=[0.3,0.6,0.9],linewidths=[0.5,1.0,0.5],
+                                       linestyles=['dashed','solid','dashed'])
+                            axs[i,j].clabel(cs,[0.3,0.6,0.9],inline=True,fmt='%1.1f',fontsize=8)"""
+                        if PlotTypes[iPlot] in ["ClrSlp"]:
+                            axs[i,j].set_xlabel("Sys. II Longitude (deg)",fontsize=8)
+
+                    else:
+                        print PlotTypes[iPlot],"off"
+                        fig.delaxes(axs[i,j])
+                elif PlotTypes[iPlot] in ["NH3Abs"]:
+                    fn=[k for k in MapsforDate if str(PlotTypes[iPlot]) in k]
+                    if len(fn) > 0:
+                        #jmap=nd.imread(drive+path+fn[0],flatten=True)*255
+                        tmp=load_png(drive+path+fn[0])
+                        jmap=tmp[:,:,0]
+                        print jmap.shape, np.max(jmap)
+                        #print jmap2.shape, np.max(jmap2)
+                        patch=np.copy(jmap[LatLims[0]:LatLims[1],LonLims[0]:LonLims[1]])
+                        print patch.shape,LonLims[0],LonLims[1]
+                        if CM2deg<45:
+                            patch=np.concatenate((np.copy(jmap[LatLims[0]:LatLims[1],LonLims[0]-1:360]),
+                                                  np.copy(jmap[LatLims[0]:LatLims[1],0:LonLims[1]-360])),axis=1)
+                        if CM2deg>315:
+                            patch=np.concatenate((np.copy(jmap[LatLims[0]:LatLims[1],360+LonLims[0]:360]),
+                                                  np.copy(jmap[LatLims[0]:LatLims[1],0:LonLims[1]])),axis=1)
+                        print patch.shape,LonLims[0],LonLims[1]
+   
+                        patch_EW=(1.0-0.961*(patch*0.2/((2.0**16.)-1.0)+0.9))*0.55/0.039
+                        patch_EW_corr=patch_EW/ZoneLimbDarkCorr[None,:]
+
+                        axs[i,j].set_adjustable('box-forced') 
+                        mapshow=axs[i,j].imshow(patch_EW_corr, "gist_heat", origin='upper',  
+                                   extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],
+                                           90-LatLims[0]],vmin=0,vmax=1.2,
+                                           aspect="equal")
+                        """cbar = pl.colorbar(mapshow, ticks=[0.0,0.3, 0.6,0.9,1.2], 
+                                           orientation='vertical',cmap='gist_heat',
+                                           ax=axs[i,j],fraction=0.046, pad=0.04)
+                        
+                        if PlotTypes[iPlot] in ["NH3Abs"]:
+                            cbar.ax.set_yticklabels(['0.0','0.3','0.6','0.9','1.2'])  # vertical colorbar
+                        else:
+                            cbar.ax.set_yticklabels(['0.9', '1.0', '1.1']) 
+                        cbar.ax.tick_params(labelsize=7)#if iSession >1:"""
+                        if cont==True:
+                            temp=make_contours(axs[i,j],NH3Abs_conv,LatLims,LonLims)
+                            """cs=axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],90-LatLims[0]],
+                                       colors=['w','w','w'], alpha=0.5,levels=[0.3,0.6,0.9],linewidths=[0.5,1.0,0.5],
+                                       linestyles=['dashed','solid','dashed'])
+                            axs[i,j].clabel(cs,[0.3,0.6,0.9],inline=True,fmt='%1.1f',fontsize=8)"""
+                        axs[i,j].set_ylabel("Planetographic Latitude (deg)",fontsize=8)
                     else:
                         print PlotTypes[iPlot],"off"
                         fig.delaxes(axs[i,j])
@@ -306,16 +361,19 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
                                    extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],
                                            90-LatLims[0]],vmin=0,vmax=65635,
                                            aspect="equal")
-                        cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], 
+                        """cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], 
                                            orientation='vertical',cmap='gist_heat',
                                            ax=axs[i,j],fraction=0.046, pad=0.04)
                         #ax=axs[i,j]
                         cbar.ax.set_yticklabels(['0.9', '1.0', '1.1'])  # vertical colorbar
                         cbar.ax.tick_params(labelsize=7)#if iSession >1:"""
                         if cont==True:
-                            axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],90-LatLims[0]],
-                                       colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
-                                       linestyles='solid')
+                            temp=make_contours(axs[i,j],NH3Abs_conv,LatLims,LonLims)
+                            """cs=axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],90-LatLims[0]],
+                                       colors=['w','w','w'], alpha=0.5,levels=[0.3,0.6,0.9],linewidths=[0.5,1.0,0.5],
+                                       linestyles=['dashed','solid','dashed'])
+                            axs[i,j].clabel(cs,[0.3,0.6,0.9],inline=True,fmt='%1.1f',fontsize=8)"""
+                        axs[i,j].set_xlabel("Sys. II Longitude (deg)",fontsize=8)
                     else:
                         print PlotTypes[iPlot],"off"
                         fig.delaxes(axs[i,j])
@@ -336,7 +394,7 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
                                    extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],
                                            90-LatLims[0]],vmin=0,vmax=65635,
                                            aspect="equal")
-                        cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], 
+                        """cbar = pl.colorbar(mapshow, ticks=[0, 32767, 65635], 
                                            orientation="vertical",cmap='gist_heat',
                                            ax=axs[i,j],fraction=0.046, pad=0.04)
                         #ax=axs[i,j]
@@ -344,17 +402,22 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
                         #cbar.ax.tick_params(labelsize=7,color="w")#if iSession >1:
                         cbar.set_ticks([])
                         cbar.outline.set_visible(False)
-                        #cbar.remove()
+                        #cbar.remove()"""
                         if cont==True:
-                            axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],90-LatLims[0]],
-                                       colors=['w','k'], alpha=0.5,levels=[28000.0,36000.0],linewidths=[0.5,0.5],
-                                       linestyles='solid')
+                            temp=make_contours(axs[i,j],NH3Abs_conv,LatLims,LonLims)
+                            """cs=axs[i,j].contour(NH3Abs_conv,origin='upper', extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],90-LatLims[0]],
+                                       colors=['w','w','w'], alpha=0.5,levels=[0.3,0.6,0.9],linewidths=[0.5,1.0,0.5],
+                                       linestyles=['dashed','solid','dashed'])
+                            axs[i,j].clabel(cs,[0.3,0.6,0.9],inline=True,fmt='%1.1f',fontsize=8)"""
+                        axs[i,j].set_ylabel("Planetographic Latitude (deg)",fontsize=8)
+                        axs[i,j].set_xlabel("Sys. II Longitude (deg)",fontsize=8)
+
                     else:
                         print PlotTypes[iPlot],"off"
                         fig.delaxes(axs[i,j])
         DateCounter=DateCounter+1
-        pl.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.92,
-                    wspace=0.25, hspace=0.1)
+        pl.subplots_adjust(left=0.10, bottom=0.08, right=0.98, top=0.90,
+                    wspace=0.10, hspace=0.10)
             
             
         pl.savefig(drive+path+"NH3 Map Plots/"+Date+"-Jupiter-NH3"+"_CMII_"+
@@ -366,19 +429,29 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
     StdZoneEW=np.std(ZoneEWArray[:,:],axis=1)
     figavgprof,axsavgprof=pl.subplots(2,1,figsize=(6.0,6.0), dpi=150, facecolor="white")
     figavgprof.suptitle("Average Ammonia Absorption Profile",x=0.5,ha='center',color='k')
-    axsavgprof[0].plot(Lats,AvgMeridEW)
-    axsavgprof[0].fill_between(Lats, AvgMeridEW-StdMeridEW, AvgMeridEW+StdMeridEW,alpha=.2)
+    axsavgprof[0].plot(Lats,AvgMeridEW,label='This Work',color='C0')
+    axsavgprof[0].fill_between(Lats, AvgMeridEW-StdMeridEW, AvgMeridEW+StdMeridEW,color='C0',alpha=.2)
     axsavgprof[0].grid(linewidth=0.2)
     axsavgprof[0].xlim=[-45.,45.]
-    axsavgprof[0].ylim=[0.,1.2]
-    axsavgprof[0].set_xticks(np.linspace(-45.,45.,7), minor=False)
-    axsavgprof[0].set_yticks(np.linspace(0.,1.2,7), minor=False)
     axsavgprof[0].tick_params(axis='both', which='major', labelsize=7)
     axsavgprof[0].set_xlabel("Planetographic Latitude (deg)",fontsize=8)
     axsavgprof[0].set_ylabel("Equivalent Width (nm)",fontsize=8)
-    axsavgprof[0].set_title(Date+", CM2="+str(int(CM2deg))+", ASI120MM",fontsize=12)
-    PTG.plot_Teifel(axsavgprof[0])
-    PTG.plot_TEXES_Groups(axsavgprof[0])
+    #axsavgprof[0].set_title("",fontsize=12)
+
+    PTG.plot_Teifel(axsavgprof[0],clr='C0')
+    axsavgprof[0].ylim=[0.,1.2]
+    axsavgprof[0].set_xticks(np.linspace(-45.,45.,7), minor=False)
+    axsavgprof[0].set_yticks(np.linspace(0.,1.2,7), minor=False)
+
+    ax2 = axsavgprof[0].twinx()  # instantiate a second axes that shares the same x-axis
+    ax2.ticklabel_format(axis='y',style='sci',scilimits=(0,1), color='C2')
+    ax2.tick_params(axis='y', which='major', labelsize=7, color='C2')
+    PTG.plot_TEXES_Groups(ax2,clr='C2')
+
+    ax2.set_ylabel("NH3 Mole Fraction at 440mb",fontsize=8)
+    ax2.yaxis.label.set_color('C2')
+    axsavgprof[0].legend(fontsize=7,loc=2)
+    ax2.legend(fontsize=7,loc=1)
 
     axsavgprof[1].plot(Lons,AvgZoneEW)
     axsavgprof[1].fill_between(Lons, AvgZoneEW-StdZoneEW, AvgZoneEW+StdZoneEW,alpha=.2)
@@ -390,8 +463,7 @@ def AmmoniaMaps(coords='map',cont=True,DateSelection='All',orientation='Landscap
     axsavgprof[1].tick_params(axis='both', which='major', labelsize=7)
     axsavgprof[1].set_xlabel("Longitude (deg)",fontsize=8)
     axsavgprof[1].set_ylabel("Equivalent Width (nm)",fontsize=8)
-    pl.savefig(drive+path+"NH3 Map Plots/Jupiter-NH3"+"_CMII_"+
-               CM2str+"-AvgProfile.png",dpi=300)
+    pl.savefig(drive+path+"NH3 Map Plots/Jupiter-NH3_CMII_AvgProfile.png",dpi=300)
         
 
     return 0
@@ -449,3 +521,11 @@ def load_png(file_path):
     #flow[invalid_idx, 1] = 0
 
     return flow.astype(np.uint16) 
+
+def make_contours(ax,NH3Abs_conv,LatLims,LonLims):
+    cs=ax.contour(NH3Abs_conv,origin='upper', 
+                  extent=[360-LonLims[0],360-LonLims[1],90-LatLims[1],90-LatLims[0]],
+                  colors=['w','w','w','w','w'], alpha=0.5,levels=[0.4,0.5,0.6,0.7,0.8],
+                  linewidths=[0.5,0.5,1.0,0.5,0.5],
+                  linestyles=['dashed','dashed','solid','dashed','dashed'])
+    ax.clabel(cs,[0.4,0.5,0.6,0.7,0.8],inline=True,fmt='%1.1f',fontsize=8)
