@@ -102,27 +102,37 @@ def Campaign(dates):
                               'moons':[[221.0,975.0]],
                               'JIDs':['0_Jupiter'],
                               'Jupiter':[[1103.0,361.0]],
-                              'Filters':['647CNT','630OI','656HIA','889CH4','940NIR']},
+                              'Filters':['647CNT','632OI','656HIA','889CH4','940NIR']},
                   '20210817UT':{'mIDs':['2_Europa','1_Io','3_Ganymede','4_Callisto'],
                               'moons':[[968.0,726.0],[988.0,717.0],[1346.0,476.0],[1382.0,461.0]],
                               'JIDs':['0_Jupiter'],
                               'Jupiter':[[828.0,829.0]],
-                              'Filters':['647CNT','630OI','656HIA','889CH4','940NIR']},
+                              'Filters':['647CNT','632OI','656HIA','889CH4','940NIR']},
                   '20210830UT':{'mIDs':['4_Callisto','1_Io','3_Ganymede','2_Europa'],
                               'moons':[[249.0,980.],[682.0,657.0],[964.0,472.0],[1035.0,424.0]],
                               'JIDs':['0_Jupiter'],
                               'Jupiter':[[877.0,534.0]],
-                              'Filters':['647CNT','630OI','656HIA','889CH4','940NIR']},
+                              'Filters':['647CNT','632OI','656HIA','889CH4','940NIR']},
                   '20210905UT':{'mIDs':['3_Ganymede','2_Europa','1_Io'],
                               'moons':[[501.0,710.],[559.0,663.0],[981.0,372.0]],
                               'JIDs':['0_Jupiter'],
                               'Jupiter':[[886.0,436.0]],
-                              'Filters':['647CNT','630OI','656HIA','889CH4','940NIR']},
+                              'Filters':['647CNT','632OI','656HIA','889CH4','940NIR']},
                   '20210906UT':{'mIDs':['1_Io','2_Europa','4_Callisto'],
                               'moons':[[266.0,852.],[564.0,650.0],[1302.0,105.0]],
                               'JIDs':['0_Jupiter'],
                               'Jupiter':[[439.0,731.0]],
-                              'Filters':['647CNT','630OI','656HIA','889CH4','940NIR']}}
+                              'Filters':['647CNT','632OI','656HIA','889CH4','940NIR']},
+                  '20211122UT':{'mIDs':['3_Ganymede','4_Callisto','2_Europa','1_Io'],
+                              'moons':[[251.0,427.0],[285.0,453.0],[442.0,505.0],[847.0,681.0]],
+                              'JIDs':['0_Jupiter'],
+                              'Jupiter':[[728.0,627.0]],
+                              'Filters':['647CNT','632OI','656HIA','730OII']},
+                  '20211123UT':{'mIDs':['4_Callisto','1_Io','3_Ganymede'],
+                              'moons':[[842.0,645.0],[859.0,633.0],[908.0,508.0]],
+                              'JIDs':['0_Jupiter'],
+                              'Jupiter':[[794.0,801.0]],
+                              'Filters':['647CNT','632OI','656HIA','730OII']}}
     
     return root_path,pathout,observations
 
@@ -175,18 +185,23 @@ def CreatePhotTable(root_path,pathout,observations,dates):
     #   1) For each date, identify FITS files for photometry via the string "Aligned". 
     #   2) Read session metadata from the observations dictionary for each date.
     for date in dates:
+        print "DATE===",date
         # Identify FITS files for photometry via the string "Aligned".
         path=root_path+date+'/'
         filelist=listdir(path)
+        print "filelist=",filelist
         FNList=[]
         for fn in filelist:
-            if "fit" in fn:
+            if ".fit" in fn:
                 if "Aligned" in fn:
                     FNList.append(fn)
-            elif "FITS" in fn:
+            elif ".FITS" in fn:
                 if "Aligned" in fn:
                     FNList.append(fn)
-    
+            elif ".FIT" in fn:
+                if "Aligned" in fn:
+                    FNList.append(fn)
+        print "FNList=============",FNList
         # Read session metadata from the observations dictionary for each date.
         Jupiter=observations[date]['Jupiter']
         JIDs=observations[date]['JIDs']
@@ -200,6 +215,7 @@ def CreatePhotTable(root_path,pathout,observations,dates):
         First=True    
         for FN in FNList:
             # Read FITS file and set HARDCODED radii for aperture photometry
+            #print path+FN
             hdulist=fits.open(path+FN)
             header=hdulist[0].header
             scidata=hdulist[0].data
@@ -227,46 +243,11 @@ def CreatePhotTable(root_path,pathout,observations,dates):
                 First1=False
             else:
                 AllTable=vstack([AllTable,outtable])
-                
-        #Write Net Counts summary table each Session with one row per Filter
-        #oFN=FN[0:10]+'UT-'+'Jupiter-Photometry.csv'
-        ###########################################################################
-    
-    
-        """
-        mask940=(sumtable['Filter']=='940NIR')
-        t940nc=sumtable[mask940]['net_count_rate']
-        mask889=(sumtable['Filter']=='889CH4')
-        t889nc=sumtable[mask889]['net_count_rate']
-        mask1000=(sumtable['Filter']=='1000NIR')
-        t1000nc=sumtable[mask1000]['net_count_rate']
-        
-        r889=t889nc/t940nc
-        trans889=r889[0]/np.mean(r889[1:5])
-        CH4_889_abs=1.0-r889[0]/np.mean(r889[1:5])
-        
-        print
-        print r889
-        print
-        print trans889
-        print CH4_889_abs
-    
-        r1000=t1000nc/t940nc
-        trans1000=r1000[0]/np.mean(r1000[1:5])
-        CH4_1000_abs=1.0-r1000[0]/np.mean(r1000[1:5])
-      
-        print
-        print r1000
-        print
-        print trans1000
-        print CH4_1000_abs
-        """
-    ###############################################################################
-    
+                   
     ascii.write(AllTable,pathout+'AllTable.csv',format='basic',overwrite=True,delimiter=',')
     return AllTable
 
-def SummaryTablePlot(AllTable,dates,MeasFilt,RefFilt):
+def SummaryTablePlot(AllTable,dates,MeasFilt,RefFilt,pathout):
     """
     ###############################################################################
     NAME:       SummaryTablePlot - Special Jupiter Version!
@@ -311,7 +292,8 @@ def SummaryTablePlot(AllTable,dates,MeasFilt,RefFilt):
     from datetime import datetime
     from astropy.table import Table#, vstack
     import numpy as np
-    
+    from astropy.io import ascii
+
     ###############################################################################
     # Set column names for summary table and initialize booleans, counters, and
     #    datetimearray. NOTE THAT DATETIMEARRAY IS SET TO 1-DAY GRANULARITY.
@@ -328,6 +310,18 @@ def SummaryTablePlot(AllTable,dates,MeasFilt,RefFilt):
     #      The selections are returned as single columns of data.
     #   
 
+    #Set Ratio y limits based on filter pair
+    YL={"647CNT":{"656HIA":[1.2,1.45],
+                  "672SII":[1.2,1.45],
+                  "658NII":[3.5,4.0],
+                  "632OI":[0.85,1.0]},
+        "889CH4":{"940NIR":[0.0,6.0]},
+        "656HIA":{"672SII":[0.8,1.2],
+                  "658NII":[2.5,3.0],
+                  "632OI":[0.0,2.0]}}
+    ExpectedLevel={"647CNT":0.961,"889CH4":0.1,"656HIA":1.0}
+    YLR={"647CNT":[0.9,1.05],"889CH4":[0.,0.2],"656HIA":[0.9,1.1]}                                
+    print "RefFilt,dates=",RefFilt,dates
     for date in dates:
         print "DATE=",date
         # Create plotable date array
@@ -347,11 +341,12 @@ def SummaryTablePlot(AllTable,dates,MeasFilt,RefFilt):
         mask656date=mask_date & mask656A         #Composite mask for date and filter
         t656ncA=AllTable[mask656date]['net_count_rate']
         t656dtA=AllTable[mask656date]['Date-Obs']
-        print AllTable[mask656date]
+        print "AllTable[mask656date]=",AllTable[mask656date]
     
         #Target names for the given session (date)
         targetsA=AllTable[mask656date]['Target']
     
+        print "len(t647ncA),len(t656ncA)=",len(t647ncA),len(t656ncA)
         print "########################",t647ncA,t656ncA
         if len(t647ncA)==len(t656ncA):  #Why this test?
             # Compute Measured over Reference count ratio, create column name
@@ -391,15 +386,17 @@ def SummaryTablePlot(AllTable,dates,MeasFilt,RefFilt):
     YY['StdP Ratio']=0.0
     YY['Conf 95%']=0.0
     
-    pl.figure(figsize=(6,4), dpi=150, facecolor="white")
-    pl.subplot(2,1,1)
+    figloc,ax=pl.subplots(2,1,figsize=(6,4), dpi=150, facecolor="white")
+    mkrsize=5.0
+    #pl.figure(figsize=(6,4), dpi=150, facecolor="white")
+    #pl.subplot(2,1,1)
     print len(dates)
     #Loop over six parameters to plot: Jupiter, Io, Europa, Ganymede, Callisto,
     #                                   MoonsAvg
     for i in range(0,6):  
         tmparr=np.zeros(len(dates))
         for j in range(0,len(dates)):
-            print i,j,dates[j]
+            print i,j,dates[j],YY[dates[j]][i]
             #print YY
             tmparr[j]=YY[dates[j]][i]
         tmparr[tmparr == 0] = np.nan
@@ -417,23 +414,23 @@ def SummaryTablePlot(AllTable,dates,MeasFilt,RefFilt):
             endtime=datetime(2020,10,10,0,0,0)
         elif date[0:4]=='2021':
             starttime=datetime(2021,8,1,0,0,0)
-            endtime=datetime(2021,9,10,0,0,0)
+            endtime=datetime(2021,11,30,0,0,0)
     
-        pl.xlim(starttime,endtime)
-        pl.ylim(1.2,1.45)
+        ax[0].set_xlim(starttime,endtime)
+        ax[0].set_ylim(YL[MeasFilt][RefFilt][0],YL[MeasFilt][RefFilt][1])
         #pl.ylim(0.9,1.1)
         #pl.ylim(3.5,4.0)
         if RowNames[i]=='0_Jupiter' or RowNames[i]=='Moons Ratio':
             mkrsize=5.0
         else:
             mkrsize=2.0
-        pl.plot_date(datetimearray,tmparr,label=RowNames[i],xdate=True,fmt='o',markersize=mkrsize)
-        pl.legend(fontsize=6,ncol=3)
+        plotshows=ax[0].plot_date(datetimearray,tmparr,label=RowNames[i],xdate=True,fmt='o',markersize=mkrsize)
+        ax[0].legend(fontsize=6,ncol=3)
         locs,labls=pl.xticks()
         labls=[]
-        pl.xticks(locs,labls)
-        pl.grid('both', linewidth=0.5)
-    pl.title(MeasFilt+' over '+RefFilt)
+        ax[0].xticks=[locs,labls]
+        ax[0].grid('both', linewidth=0.5)
+    ax[0].set_title(MeasFilt+' over '+RefFilt)
         
     tmperr=np.zeros(len(dates))
       
@@ -444,17 +441,30 @@ def SummaryTablePlot(AllTable,dates,MeasFilt,RefFilt):
         tmperr[j]=YY[dates[j]][10]
     tmparr[tmparr == 0] = np.nan
 
-    pl.subplot(2,1,2)
-    pl.xlim(starttime,endtime)
-    pl.ylim(0.9,1.05)
+    #pl.subplot(2,1,2)
+    ax[1].set_xlim(starttime,endtime)
+    ax[1].set_ylim(YLR[MeasFilt][0],YLR[MeasFilt][1])
     mkrsize=2.0
-    pl.plot_date(datetimearray,tmparr,label=RowNames[8],xdate=True,fmt='o',
+    ax[1].plot_date(datetimearray,tmparr,label=RowNames[8],xdate=True,fmt='o',
                  markersize=mkrsize,color='k')
-    pl.errorbar(datetimearray,tmparr,yerr=tmperr,linewidth=0.0,ecolor='k',elinewidth=1.0)
-    pl.plot_date(datetimearray,0.961*np.ones(len(datetimearray)),xdate=True,
+    ax[1].errorbar(datetimearray,tmparr,yerr=tmperr,linewidth=0.0,ecolor='k',elinewidth=1.0)
+
+    ax[1].plot_date([starttime,endtime],ExpectedLevel[MeasFilt]*np.ones(2),xdate=True,
+                 linestyle='dashed',markersize=0.0,color='r',linewidth=0.5)
+    ax[1].plot_date([starttime,endtime],np.mean(tmparr)*np.ones(2),xdate=True,
                  linestyle='dashed',markersize=0.0,color='k',linewidth=0.5)
-    pl.legend(fontsize=6)
-    pl.grid('both', linewidth=0.5)
+    ax[1].text(starttime, ExpectedLevel[MeasFilt],str(ExpectedLevel[MeasFilt])[0:5],
+             horizontalalignment='left', verticalalignment='bottom',color='r',fontsize=8)
+    ax[1].text(starttime, np.mean(tmparr),str(np.mean(tmparr))[0:5],
+             horizontalalignment='left', verticalalignment='bottom',color='k',fontsize=8)
+    
+    
+    ax[1].legend(fontsize=6)
+    ax[1].grid('both', linewidth=0.5)
+    ascii.write(YY,pathout+'Transmission_'+MeasFilt+'_over_'+RefFilt+'.csv',format='csv',
+                overwrite=True,delimiter=',')
+    #print pathout
+    figloc.savefig(pathout+'Jupiter-Photometry_'+dates[0][0:4]+'_'+MeasFilt+'_over_'+RefFilt+'.png',dpi=300)
 
         
     return YY
