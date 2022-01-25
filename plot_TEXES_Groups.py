@@ -6,6 +6,12 @@ Created on Sun Dec 05 08:48:16 2021
 """
 
 def plot_TEXES_Groups(ax,clr="C2"):
+    """
+    PURPOSE:    This code reads and plots the NH3 mole fraction data from
+                Fletcher et al., 2016 at 440mb pressure. It loops over the
+                seven groups of observations and computes an average and
+                standard deviation for plotting.
+    """
     import matplotlib.pyplot as pl
     import scipy
     import numpy as np
@@ -35,6 +41,11 @@ def plot_TEXES_Groups(ax,clr="C2"):
 
     
 def plot_Teifel(ax,clr='C0'):
+    """
+    PURPOSE:    This code reads and plots the zonally averaged NH3 absorption
+                EW at 645nm from data scanned from Teifel et al., 2018 
+                figure 7.
+    """
     import matplotlib.pyplot as pl
     import scipy
     import numpy as np
@@ -45,13 +56,7 @@ def plot_Teifel(ax,clr='C0'):
     import scipy
     pth="F:/Astronomy/Projects/SAS 2021 Ammonia/Jupiter_NH3_Analysis/"
     Teifel = np.array(genfromtxt(pth+"Teifel2018-Fig7.txt", delimiter=','))
-    #TEXESGrid=np.zeros((181,2))
-    #latgrid,tmpsig=CNRJ.uniform_lat_grid(TEXESRef[:,0],TEXESRef[:,1],Fine=True)
-    #TEXESGrid[:,0]=latgrid[:]
-    #TEXESGrid[:,1]=tmpsig[:]
-    #print data[:]
     ax.scatter(Teifel[4:24,0],Teifel[4:24,1]*0.1,label='Teifel etal, 2018',color=clr)
-    #pl.ylim(0.0,1.2)
 
 def Centric_to_Graphic(Latc):
     #Formula used is from Simon and Beebe, 1996

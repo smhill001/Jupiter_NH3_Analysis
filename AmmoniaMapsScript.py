@@ -22,4 +22,6 @@ CCD2020Dates=["2020-09-02","2020-09-03","2020-09-04","2020-09-13",
 
 ALLValidated=["2020-07-20","2020-07-29","2021-07-08","2021-07-20",
               "2021-09-27"]
-AmmoniaMaps(DateSelection=CMOSDates,patch_from_config_file=False,cont=True)
+
+Late2021Validated=["2021-11-30","2021-12-02","2021-12-03"]
+AmmoniaMaps(DateSelection=Late2021Validated,cont=True)
