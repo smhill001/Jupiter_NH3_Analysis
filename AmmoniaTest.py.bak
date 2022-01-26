@@ -18,18 +18,18 @@ This code creates two plots, each with two subplots
 @author: Steven Hill
 """
 import sys
-sys.path.append('c:/Astronomy/Python Play')
-sys.path.append('c:/Astronomy/Python Play/Util_P3')
-sys.path.append('c:/Astronomy/Python Play/SPLibraries')
-sys.path.append('c:/Astronomy/Python Play/SpectroPhotometry/Spectroscopy_P3')
+sys.path.append('c:\\Astronomy\Python Play')
+sys.path.append('c:\\Astronomy\Python Play\Util')
+sys.path.append('c:\\Astronomy\Python Play\SPLibraries')
+sys.path.append('c:\\Astronomy\Python Play\SpectroPhotometry\Spectroscopy')
 import matplotlib.pyplot as pl
-#import pylab
+import pylab
 import numpy as np
 import scipy
-#from scipy import interpolate
-#from PyAstronomy import pyasl
+from scipy import interpolate
+from PyAstronomy import pyasl
 import GeneralSpecUtils as GSU
-#import ConfigFiles as CF
+import ConfigFiles as CF
 import SpecPhotLibV005 as SPL
 from numpy import genfromtxt
 
@@ -50,7 +50,7 @@ JK[:,0]=WaveGrid
 JK[:,1]=SignalonGrid
 
 SplineWV = np.array([560.0, 580.0, 600.0, 635.0, 660.0, 675.0, 690., 714.0])
-print(SplineWV)
+print SplineWV
 Temp=SPL.log_spline_smoother(SplineWV,JK)
 Continuum_Albedo=np.zeros((WaveGrid.size,2))
 Continuum_Albedo[:,0]=WaveGrid
@@ -359,27 +359,27 @@ EndIndex647=np.where(ContinuumProduct647[:,0]==659.0)
 ContimIntegral647=sum(ContinuumProduct647[StartIndex647[0][0]:EndIndex647[0][0],1])
 AbsorpIntegral647=sum(AbsorptionProduct647[StartIndex647[0][0]:EndIndex647[0][0],1])
 
-print("########### Jupiter 647NH3/647Cont")
-print("index=",StartIndex647[0][0],EndIndex647[0][0])
-print("Contin, Absorp=",ContimIntegral647,AbsorpIntegral647)
-print("Ratio, 1-Ratio=",AbsorpIntegral647/ContimIntegral647,1.0-AbsorpIntegral647/ContimIntegral647)
-print("1/(1-Ratio)=",1.0/(1.0-AbsorpIntegral647/ContimIntegral647))
+print "########### Jupiter 647NH3/647Cont"
+print "index=",StartIndex647[0][0],EndIndex647[0][0]
+print "Contin, Absorp=",ContimIntegral647,AbsorpIntegral647
+print "Ratio, 1-Ratio=",AbsorpIntegral647/ContimIntegral647,1.0-AbsorpIntegral647/ContimIntegral647
+print "1/(1-Ratio)=",1.0/(1.0-AbsorpIntegral647/ContimIntegral647)
 
 StartIndex656=np.where(ContinuumProduct656[:,0]==645.0)
 EndIndex656=np.where(ContinuumProduct656[:,0]==672.0)
 ContimIntegral656=sum(ContinuumProduct656[StartIndex656[0][0]:EndIndex656[0][0],1])
 AbsorpIntegral656=sum(AbsorptionProduct656[StartIndex656[0][0]:EndIndex656[0][0],1])
-print()
-print("########### Jupiter 656NH3/656Cont")
-print("index=",StartIndex656[0][0],EndIndex656[0][0])
-print("Contin, Absorp=",ContimIntegral656,AbsorpIntegral656)
-print("Ratio, 1-Ratio=",AbsorpIntegral656/ContimIntegral656,1.0-AbsorpIntegral656/ContimIntegral656)
-print("1/(1-Ratio)=",1.0/(1.0-AbsorpIntegral656/ContimIntegral656))
-print()
-print("########### Jupiter 647/656 ratios")
-print("647/656 Continuum=",ContimIntegral647/ContimIntegral656)
-print("647/656 with NH3=",AbsorpIntegral647/AbsorpIntegral656)
-print("(647/656 with NH3)/(647/656 Continuum)=",(AbsorpIntegral647/AbsorpIntegral656)/(ContimIntegral647/ContimIntegral656))
+print
+print "########### Jupiter 656NH3/656Cont"
+print "index=",StartIndex656[0][0],EndIndex656[0][0]
+print "Contin, Absorp=",ContimIntegral656,AbsorpIntegral656
+print "Ratio, 1-Ratio=",AbsorpIntegral656/ContimIntegral656,1.0-AbsorpIntegral656/ContimIntegral656
+print "1/(1-Ratio)=",1.0/(1.0-AbsorpIntegral656/ContimIntegral656)
+print
+print "########### Jupiter 647/656 ratios"
+print "647/656 Continuum=",ContimIntegral647/ContimIntegral656
+print "647/656 with NH3=",AbsorpIntegral647/AbsorpIntegral656
+print "(647/656 with NH3)/(647/656 Continuum)=",(AbsorpIntegral647/AbsorpIntegral656)/(ContimIntegral647/ContimIntegral656)
 
 ###############################################################################
 
@@ -392,15 +392,15 @@ CalIntegral656=sum(CallistoProduct656[StartIndex656[0][0]:EndIndex656[0][0],1])
 GanIntegral656=sum(GanymedeProduct656[StartIndex656[0][0]:EndIndex656[0][0],1])
 EurIntegral656=sum(EuropaProduct656[StartIndex656[0][0]:EndIndex656[0][0],1])
 IoIntegral656=sum(IoProduct656[StartIndex656[0][0]:EndIndex656[0][0],1])
-print()
-print("########### Moons 647/656")
-print("Callisto=",CalIntegral647/CalIntegral656)
-print("Ganymede=",GanIntegral647/GanIntegral656)
-print("Europa=",EurIntegral647/EurIntegral656)
-print("Io=",IoIntegral647/IoIntegral656)
-print()
-print("########### Moons Correction Factor to Jupiter Continuum Estimate")
-print("Callisto=",(ContimIntegral647/ContimIntegral656)/(CalIntegral647/CalIntegral656))
-print("Ganymede=",(ContimIntegral647/ContimIntegral656)/(GanIntegral647/GanIntegral656))
-print("Europa=",(ContimIntegral647/ContimIntegral656)/(EurIntegral647/EurIntegral656))
-print("Io=",(ContimIntegral647/ContimIntegral656)/(IoIntegral647/IoIntegral656))
+print
+print "########### Moons 647/656"
+print "Callisto=",CalIntegral647/CalIntegral656
+print "Ganymede=",GanIntegral647/GanIntegral656
+print "Europa=",EurIntegral647/EurIntegral656
+print "Io=",IoIntegral647/IoIntegral656
+print
+print "########### Moons Correction Factor to Jupiter Continuum Estimate"
+print "Callisto=",(ContimIntegral647/ContimIntegral656)/(CalIntegral647/CalIntegral656)
+print "Ganymede=",(ContimIntegral647/ContimIntegral656)/(GanIntegral647/GanIntegral656)
+print "Europa=",(ContimIntegral647/ContimIntegral656)/(EurIntegral647/EurIntegral656)
+print "Io=",(ContimIntegral647/ContimIntegral656)/(IoIntegral647/IoIntegral656)

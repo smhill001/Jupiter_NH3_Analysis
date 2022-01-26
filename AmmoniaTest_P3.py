@@ -14,31 +14,28 @@ This code creates two plots, each with two subplots
         Subplot 1:  Plots regional reflectivities (I/F) for NEB, EZ, and SEB from Dahl, 2021
         Subplot 2:  Plots Galilean moon reflectivites from Clark & McCord, 1980
 
+UPDATE 2022-01-25:  Converted the code to Python 3 on the new Astronomy laptop
 
 @author: Steven Hill
 """
 import sys
 sys.path.append('c:/Astronomy/Python Play')
 sys.path.append('c:/Astronomy/Python Play/Util_P3')
-sys.path.append('c:/Astronomy/Python Play/SPLibraries')
+sys.path.append('c:/Astronomy/Python Play/SPLibraries_P3')
 sys.path.append('c:/Astronomy/Python Play/SpectroPhotometry/Spectroscopy_P3')
 import matplotlib.pyplot as pl
-#import pylab
 import numpy as np
-import scipy
-#from scipy import interpolate
-#from PyAstronomy import pyasl
-import GeneralSpecUtils as GSU
-#import ConfigFiles as CF
-import SpecPhotLibV005 as SPL
+from scipy import interpolate
+import GeneralSpecUtils_P3 as GSU
 from numpy import genfromtxt
 
 ###### Get reference disk-integrated albedo from Karkoschka, 1994
 
-Jupiter_Karkoschka1993 = scipy.fromfile(file="F:/Astronomy/Projects/Planets/Saturn/Spectral Data/Karkoschka/1993.tab.txt", dtype=float, count=-1, sep=" ")    
-Jupiter_Karkoschka1993=scipy.reshape(Jupiter_Karkoschka1993,[Jupiter_Karkoschka1993.size/8,8])
+Jupiter_Karkoschka1993 = np.fromfile(file="c:/Astronomy/Projects/Planets/Saturn/Spectral Data/Karkoschka/1993.tab.txt", dtype=float, count=-1, sep=" ")
+kark1993nrows=int(Jupiter_Karkoschka1993.size/8)
+Jupiter_Karkoschka1993=np.reshape(Jupiter_Karkoschka1993,[kark1993nrows,8])
 
-Jupiter_KarkRef1993=np.zeros((Jupiter_Karkoschka1993.size/8,2))
+Jupiter_KarkRef1993=np.zeros((kark1993nrows,2))
 Jupiter_KarkRef1993[:,0]=Jupiter_Karkoschka1993[:,0]
 Jupiter_KarkRef1993[:,1]=Jupiter_Karkoschka1993[:,3]
 
@@ -48,26 +45,45 @@ WaveGrid,SignalonGrid=GSU.uniform_wave_grid(Jupiter_KarkRef1993[:,0],Jupiter_Kar
 JK=np.zeros((WaveGrid.size,2))
 JK[:,0]=WaveGrid
 JK[:,1]=SignalonGrid
-
+#### CODE THIS INLINE WITH THE NEW SCIPY PYTHON 3 IMPLEMENTATION OF
+#### SPLINE FITTING
 SplineWV = np.array([560.0, 580.0, 600.0, 635.0, 660.0, 675.0, 690., 714.0])
-print(SplineWV)
-Temp=SPL.log_spline_smoother(SplineWV,JK)
+SplineMag=np.ones(SplineWV.size)
+for i in range(0,SplineWV.size):
+    Start=SplineWV[i]-.0000001
+    End=SplineWV[i]+.0000001
+    SplineWVIndices=np.where((JK[:,0] >Start) & \
+         (JK[:,0] < End))
+    print("i= ",i,SplineWVIndices)
+    SplineMag[i]=np.log10(JK[SplineWVIndices[0],1])
+
+x = np.arange(0, 2*np.pi+np.pi/4, 2*np.pi/8)
+y = np.sin(x)
+tck = interpolate.splrep(SplineWV, SplineMag, s=0)
+#xnew = np.arange(0, 2*np.pi, np.pi/50)
+Temp = 10**interpolate.splev(WaveGrid, tck, der=0)
+
+
+
+#print(SplineWV)
+#Temp=SPL.log_spline_smoother(SplineWV,JK)
+
 Continuum_Albedo=np.zeros((WaveGrid.size,2))
 Continuum_Albedo[:,0]=WaveGrid
 Continuum_Albedo[:,1]=Temp
 
-CH4_KarkRef1993=np.zeros((Jupiter_Karkoschka1993.size/8,2))
+CH4_KarkRef1993=np.zeros((kark1993nrows,2))
 CH4_KarkRef1993[:,0]=Jupiter_Karkoschka1993[:,0]
 CH4_KarkRef1993[:,1]=Jupiter_Karkoschka1993[:,2]
 
 
 ###### Get reference regional I/F reflectivities from Dahl, 2021?
 
-Dahl_NEB="F:/Astronomy/Projects/SAS 2021 Ammonia/Dahl Spectra-NEB.txt"
+Dahl_NEB="c:/Astronomy/Projects/SAS 2021 Ammonia/Dahl Spectra-NEB.txt"
 NEB = genfromtxt(Dahl_NEB, delimiter=',')
-Dahl_SEB="F:/Astronomy/Projects/SAS 2021 Ammonia/Dahl Spectra-SEB.txt"
+Dahl_SEB="c:/Astronomy/Projects/SAS 2021 Ammonia/Dahl Spectra-SEB.txt"
 SEB = genfromtxt(Dahl_SEB, delimiter=',')
-Dahl_EZ="F:/Astronomy/Projects/SAS 2021 Ammonia/Dahl Spectra-EZ.txt"
+Dahl_EZ="c:/Astronomy/Projects/SAS 2021 Ammonia/Dahl Spectra-EZ.txt"
 EZ = genfromtxt(Dahl_EZ, delimiter=',')
 
 ###### Plot disk-integrated reference albedo and simulated ammonia-free albedo
@@ -104,45 +120,45 @@ pl.legend(fontsize=7)
 
 ###### Retrieve filter transmissions and convovle with disk integrated albedoes
 
-FilterFile="F:/Astronomy/Projects/Stars/Capella/Spectral Data/1D Spectra/Capella20201125024213_1D_WVCal.txt"
-FilterOPNC = scipy.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
-FilterOPNC=scipy.reshape(FilterOPNC,[FilterOPNC.size/2,2])
+FilterFile="c:/Astronomy/Projects/Stars/Capella/Spectral Data/1D Spectra/Capella20201125024213_1D_WVCal.txt"
+FilterOPNC = np.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
+FilterOPNC=np.reshape(FilterOPNC,[int(FilterOPNC.size/2),2])
 
-FilterFile="F:/Astronomy/Projects/Stars/Capella/Spectral Data/1D Spectra/Capella20201125025745_1D_WVCal.txt"
-Filter672 = scipy.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
-Filter672=scipy.reshape(Filter672,[Filter672.size/2,2])
+FilterFile="c:/Astronomy/Projects/Stars/Capella/Spectral Data/1D Spectra/Capella20201125025745_1D_WVCal.txt"
+Filter672 = np.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
+Filter672=np.reshape(Filter672,[int(Filter672.size/2),2])
 Transmission672=GSU.SpectrumMath(Filter672,FilterOPNC,"Divide")
 
 ##########
 
-FilterFile="F:/Astronomy/Projects/Planets/Mars/Spectral Data/1D Spectra/Mars20201122014325_1D_WVCal.txt"
-FilterOPNM = scipy.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
-FilterOPNM=scipy.reshape(FilterOPNM,[FilterOPNM.size/2,2])
+FilterFile="c:/Astronomy/Projects/Planets/Mars/Spectral Data/1D Spectra/Mars20201122014325_1D_WVCal.txt"
+FilterOPNM = np.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
+FilterOPNM=np.reshape(FilterOPNM,[int(FilterOPNM.size/2),2])
 
-FilterFile="F:/Astronomy/Projects/Planets/Mars/Spectral Data/1D Spectra/Mars20201122020503_1D_WVCal.txt"
-Filter658 = scipy.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
-Filter658=scipy.reshape(Filter658,[Filter658.size/2,2])
+FilterFile="c:/Astronomy/Projects/Planets/Mars/Spectral Data/1D Spectra/Mars20201122020503_1D_WVCal.txt"
+Filter658 = np.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
+Filter658=np.reshape(Filter658,[int(Filter658.size/2),2])
 Transmission658=GSU.SpectrumMath(Filter658,FilterOPNM,"Divide")
 
-FilterFile="F:/Astronomy/Projects/Planets/Mars/Spectral Data/1D Spectra/Mars20201122015240_1D_WVCal.txt"
-Filter656 = scipy.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
-Filter656=scipy.reshape(Filter656,[Filter656.size/2,2])
+FilterFile="c:/Astronomy/Projects/Planets/Mars/Spectral Data/1D Spectra/Mars20201122015240_1D_WVCal.txt"
+Filter656 = np.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
+Filter656=np.reshape(Filter656,[int(Filter656.size/2),2])
 Transmission656=GSU.SpectrumMath(Filter656,FilterOPNM,"Divide")
 
-FilterFile="F:/Astronomy/Projects/Planets/Mars/Spectral Data/1D Spectra/Mars20201122020035_1D_WVCal.txt"
-Filter647 = scipy.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
-Filter647=scipy.reshape(Filter647,[Filter647.size/2,2])
+FilterFile="c:/Astronomy/Projects/Planets/Mars/Spectral Data/1D Spectra/Mars20201122020035_1D_WVCal.txt"
+Filter647 = np.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
+Filter647=np.reshape(Filter647,[int(Filter647.size/2),2])
 Transmission647=GSU.SpectrumMath(Filter647,FilterOPNM,"Divide")
 
 ##########
 
-FilterFile="F:/Astronomy/Projects/Stars/Vega/Spectral Data/1D Spectra/Vega20210727051700_1D_WVCal.txt"
-FilterOPNV = scipy.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
-FilterOPNV=scipy.reshape(FilterOPNV,[FilterOPNV.size/2,2])
+FilterFile="c:/Astronomy/Projects/Stars/Vega/Spectral Data/1D Spectra/Vega20210727051700_1D_WVCal.txt"
+FilterOPNV = np.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
+FilterOPNV=np.reshape(FilterOPNV,[int(FilterOPNV.size/2),2])
 
-FilterFile="F:/Astronomy/Projects/Stars/Vega/Spectral Data/1D Spectra/Vega20210727051317_1D_WVCal.txt"
-Filter632 = scipy.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
-Filter632=scipy.reshape(Filter632,[Filter632.size/2,2])
+FilterFile="c:/Astronomy/Projects/Stars/Vega/Spectral Data/1D Spectra/Vega20210727051317_1D_WVCal.txt"
+Filter632 = np.fromfile(file=FilterFile, dtype=float, count=-1, sep='\t')    
+Filter632=np.reshape(Filter632,[int(Filter632.size/2),2])
 Transmission632=GSU.SpectrumMath(Filter632,FilterOPNC,"Divide")
 
 ##########
@@ -196,7 +212,7 @@ pl.plot(AbsorptionProduct632[:,0],AbsorptionProduct632[:,1],linewidth=0.5,color=
 pl.legend(fontsize=7)
 
 
-pl.savefig('F:/Astronomy/Projects/SAS 2021 Ammonia/Jupiter_NH3_Analysis/AmmoniaFilter.png',dpi=320)
+pl.savefig('c:/Astronomy/Projects/SAS 2021 Ammonia/Jupiter_NH3_Analysis_P3/AmmoniaFilter.png',dpi=320)
 
 ###### Plot regional and moon reflectivities
 
@@ -232,8 +248,8 @@ pl.plot(JK[:,0],JK[:,1],label='Kark - regrid',linewidth=1,color='0.3')
 pl.plot(Continuum_Albedo[:,0],Continuum_Albedo[:,1],label='Continuum',linewidth=1,color='0.7')
 """
 
-Callisto1980 = scipy.fromfile(file="F:/Astronomy/Projects/Planets/JovianMoons/References/callisto_no_header.txt", dtype=float, count=-1, sep=" ")    
-Callisto1980=scipy.reshape(Callisto1980,[Callisto1980.size/3,3])
+Callisto1980 = np.fromfile(file="c:/Astronomy/Projects/Planets/JovianMoons/References/callisto_no_header.txt", dtype=float, count=-1, sep=" ")    
+Callisto1980=np.reshape(Callisto1980,[int(Callisto1980.size/3),3])
 
 WaveGrid,SignalonGrid=GSU.uniform_wave_grid(Callisto1980[:,0]*1000.,Callisto1980[:,1],
                                         Extend=False,Fine=False)
@@ -248,8 +264,8 @@ CallistoProduct647=GSU.SpectrumMath(Transmission647,CalGrid,"Multiply")
 CallistoProduct632=GSU.SpectrumMath(Transmission632,CalGrid,"Multiply")
 
 
-Ganymede1980 = scipy.fromfile(file="F:/Astronomy/Projects/Planets/JovianMoons/References/ganymede_no_header.txt", dtype=float, count=-1, sep=" ")    
-Ganymede1980=scipy.reshape(Ganymede1980,[Ganymede1980.size/3,3])
+Ganymede1980 = np.fromfile(file="c:/Astronomy/Projects/Planets/JovianMoons/References/ganymede_no_header.txt", dtype=float, count=-1, sep=" ")    
+Ganymede1980=np.reshape(Ganymede1980,[int(Ganymede1980.size/3),3])
 
 WaveGrid,SignalonGrid=GSU.uniform_wave_grid(Ganymede1980[:,0]*1000.,Ganymede1980[:,1],
                                         Extend=False,Fine=False)
@@ -263,8 +279,8 @@ GanymedeProduct656=GSU.SpectrumMath(Transmission656,GanGrid,"Multiply")
 GanymedeProduct647=GSU.SpectrumMath(Transmission647,GanGrid,"Multiply")
 GanymedeProduct632=GSU.SpectrumMath(Transmission632,GanGrid,"Multiply")
 
-Europa1980 = scipy.fromfile(file="F:/Astronomy/Projects/Planets/JovianMoons/References/europa_no_header.txt", dtype=float, count=-1, sep=" ")    
-Europa1980=scipy.reshape(Europa1980,[Europa1980.size/3,3])
+Europa1980 = np.fromfile(file="c:/Astronomy/Projects/Planets/JovianMoons/References/europa_no_header.txt", dtype=float, count=-1, sep=" ")    
+Europa1980=np.reshape(Europa1980,[int(Europa1980.size/3),3])
 
 WaveGrid,SignalonGrid=GSU.uniform_wave_grid(Europa1980[:,0]*1000.,Europa1980[:,1],
                                         Extend=False,Fine=False)
@@ -278,11 +294,11 @@ EuropaProduct656=GSU.SpectrumMath(Transmission656,EurGrid,"Multiply")
 EuropaProduct647=GSU.SpectrumMath(Transmission647,EurGrid,"Multiply")
 EuropaProduct632=GSU.SpectrumMath(Transmission632,EurGrid,"Multiply")
 
-Io_leading1980 = scipy.fromfile(file="F:/Astronomy/Projects/Planets/JovianMoons/References/io.leading_no_header.txt", dtype=float, count=-1, sep=" ")    
-Io_leading1980=scipy.reshape(Io_leading1980,[Io_leading1980.size/3,3])
+Io_leading1980 = np.fromfile(file="c:/Astronomy/Projects/Planets/JovianMoons/References/io.leading_no_header.txt", dtype=float, count=-1, sep=" ")    
+Io_leading1980=np.reshape(Io_leading1980,[int(Io_leading1980.size/3),3])
 
-Io_trailing1980 = scipy.fromfile(file="F:/Astronomy/Projects/Planets/JovianMoons/References/io.trailing_no_header.txt", dtype=float, count=-1, sep=" ")    
-Io_trailing1980=scipy.reshape(Io_trailing1980,[Io_trailing1980.size/3,3])
+Io_trailing1980 = np.fromfile(file="c:/Astronomy/Projects/Planets/JovianMoons/References/io.trailing_no_header.txt", dtype=float, count=-1, sep=" ")    
+Io_trailing1980=np.reshape(Io_trailing1980,[int(Io_trailing1980.size/3),3])
 
 WaveGrid,SignalonGrid=GSU.uniform_wave_grid(Io_trailing1980[:,0]*1000.,Io_trailing1980[:,1],
                                         Extend=False,Fine=False)
@@ -350,7 +366,7 @@ pl.plot(IoProduct632[:,0],IoProduct632[:,1],linewidth=0.5,color='k')
 
 pl.legend(fontsize=7)
 
-pl.savefig('F:/Astronomy/Projects/SAS 2021 Ammonia/Jupiter_NH3_Analysis/ColorSlopes.png',dpi=320)
+pl.savefig('c:/Astronomy/Projects/SAS 2021 Ammonia/Jupiter_NH3_Analysis_P3/ColorSlopes.png',dpi=320)
 
 ###############################################################################
 
