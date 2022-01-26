@@ -18,10 +18,10 @@ This code creates two plots, each with two subplots
 @author: Steven Hill
 """
 import sys
-sys.path.append('f:\\Astronomy\Python Play')
-sys.path.append('f:\\Astronomy\Python Play\Util')
-sys.path.append('f:\\Astronomy\Python Play\SPLibraries')
-sys.path.append('f:\\Astronomy\Python Play\SpectroPhotometry\Spectroscopy')
+sys.path.append('c:\\Astronomy\Python Play')
+#sys.path.append('c:\\Astronomy\Python Play\Util')
+sys.path.append('c:\\Astronomy\Python Play\SPLibraries')
+sys.path.append('c:\\Astronomy\Python Play\SpectroPhotometry\Spectroscopy')
 import matplotlib.pyplot as pl
 import pylab
 import numpy as np
